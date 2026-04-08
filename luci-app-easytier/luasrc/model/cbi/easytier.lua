@@ -38,7 +38,6 @@ etcmd = s:taboption("general", ListValue, "etcmd", translate("Startup Method"),
                 .. "https://easytier.cn/web/index.html#/config_generator</a><br>Please note to set the RPC port to 15888"))
 etcmd.default = "etcmd"
 etcmd:value("etcmd", translate("Default"))
-etcmd:value("config", translate("Configuration File"))
 etcmd:value("web", translate("Web Configuration"))
 
 et_config = s:taboption("general", TextValue, "et_config", translate("Configuration File"),
@@ -47,7 +46,8 @@ et_config = s:taboption("general", TextValue, "et_config", translate("Configurat
                 .. "Make sure to specify the TUN interface name and port to enable automatic firewall allowance"))
 et_config.rows = 18
 et_config.wrap = "off"
-et_config:depends("etcmd", "config")
+et_config.readonly = true
+et_config:depends("etcmd", "etcmd")
 
 et_config.cfgvalue = function(self, section)
     return nixio.fs.readfile("/etc/easytier/config.toml") or ""
@@ -101,6 +101,7 @@ ipaddr = s:taboption("general", Value, "ipaddr", translate("Interface IP Address
 ipaddr.datatype = "ip4addr"
 ipaddr.placeholder = "10.0.0.1"
 ipaddr:depends("etcmd", "etcmd")
+ipaddr:depends("ip_dhcp", "0")
 
 ip6addr = s:taboption("general", Value, "ip6addr", translate("Interface IPV6 Address"),
         translate("ipv6 address of this vpn node, can be used together with ipv4 for dual-stack operation"
@@ -108,6 +109,11 @@ ip6addr = s:taboption("general", Value, "ip6addr", translate("Interface IPV6 Add
 ip6addr.datatype = "ip6addr"
 ip6addr.placeholder = "2001:db8::1"
 ip6addr:depends("etcmd", "etcmd")
+
+listenport = s:taboption("general", DynamicList, "listenport", translate("listenport"),
+		translate("example: udp://0.0.0.0:11010	quic://[::]:11011"))
+
+
 
 peeradd = s:taboption("general", DynamicList, "peeradd", translate("Peer Nodes"),
         translate("Initial connected peer nodes (-p parameter)<br>"
@@ -150,51 +156,6 @@ rpc_portal_whitelist = s:taboption("privacy", Value, "rpc_portal_whitelist", tra
 rpc_portal_whitelist.placeholder = "127.0.0.1/32,127.0.0.0/8,::1/128"
 rpc_portal_whitelist:depends("etcmd", "etcmd")
 
-listenermode = s:taboption("general", ListValue, "listenermode", translate("Listener Port"),
-        translate("OFF: Do not listen on any port, only connect to peer nodes (--no-listener parameter)<br>"
-                .. "If used purely as a client (not as a server), you can choose not to listen on a port"))
-listenermode:value("ON", translate("Listen"))
-listenermode:value("OFF", translate("Do Not Listen"))
-listenermode.default = "ON"
-listenermode:depends("etcmd", "etcmd")
-
-tcp_port = s:taboption("general", Value, "tcp_port", translate("TCP/UDP Port"),
-        translate("TCP/UDP protocol port number: 11010 means TCP/UDP will listen on port 11010.<br>"
-                .. "If this is the Web configuration in the config file, please fill in the same listening port for firewall allowance."))
-tcp_port.datatype = "range(1,65535)"
-tcp_port.default = "11010"
-tcp_port:depends("listenermode", "ON")
-tcp_port:depends("etcmd", "web")
-
-ws_port = s:taboption("general", Value, "ws_port", translate("WS Port"),
-        translate("WS protocol port number: 11011 means WS will listen on port 11011.<br>"
-                .. "If this is the Web configuration in the config file, please fill in the same listening port for firewall allowance."))
-ws_port.datatype = "range(1,65535)"
-ws_port.default = "11011"
-ws_port:depends("listenermode", "ON")
-ws_port:depends("etcmd", "web")
-
-wss_port = s:taboption("general", Value, "wss_port", translate("WSS Port"),
-        translate("WSS protocol port number: 11012 means WSS will listen on port 11012.<br>"
-                .. "If this is the Web configuration in the config file, please fill in the same listening port for firewall allowance."))
-wss_port.datatype = "range(1,65535)"
-wss_port.default = "11012"
-wss_port:depends("listenermode", "ON")
-wss_port:depends("etcmd", "web")
-
-wg_port = s:taboption("general", Value, "wg_port", translate("WG Port"),
-        translate("WireGuard protocol port number: 11011 means WG will listen on port 11011.<br>"
-                .. "If this is the Web configuration in the config file, please fill in the same listening port for firewall allowance."))
-wg_port.datatype = "range(1,65535)"
-wg_port.placeholder = "11011"
-wg_port:depends("listenermode", "ON")
-wg_port:depends("etcmd", "web")
-
-quic_port = s:taboption("general", Value, "quic_port", translate("QUIC Port"),
-        translate("If this is the Web configuration in the config file, please fill in the same listening port for firewall allowance."))
-quic_port.datatype = "range(1,65535)"
-quic_port:depends("listenermode", "ON")
-quic_port:depends("etcmd", "web")
 
 local model = nixio.fs.readfile("/proc/device-tree/model") or ""
 local hostname = nixio.fs.readfile("/proc/sys/kernel/hostname") or ""
@@ -206,8 +167,6 @@ hostname_opt = s:taboption("general", Value, "desvice_name", translate("Hostname
         translate("The hostname used to identify this device (--hostname parameter)"))
 hostname_opt.placeholder = device_name_default
 hostname_opt.default = device_name_default
-hostname_opt:depends("etcmd", "etcmd")
-hostname_opt:depends("etcmd", "web")
 
 uuid = s:taboption("general", Value, "uuid", translate("UUID"),
         translate("Unique identifier used to recognize this device when connecting to the web console, for issuing configuration files"))
@@ -461,6 +420,11 @@ interface_netmask.default = "255.0.0.0"
 interface_netmask.datatype = "ip4addr"
 interface_netmask:depends("auto_config_interface", "1")
 
+et_flags = s:taboption("general", MultiValue, "et_flags", translate("Advance Control"))
+et_flags:value("", translate(""))
+
+et_flags.rmempty = false
+
 auto_config_firewall = s:taboption("privacy", Flag, "auto_config_firewall", translate("Auto Configure Firewall"),
         translate("Automatically add and manage firewall rules"))
 auto_config_firewall.default = "1"
@@ -472,7 +436,7 @@ et_forward:value("etfwwan", translate("Allow traffic from EasyTier virtual netwo
 et_forward:value("lanfwet", translate("Allow traffic from LAN to EasyTier virtual network"))
 et_forward:value("wanfwet", translate("Allow traffic from WAN to EasyTier virtual network"))
 et_forward.default = "etfwlan etfwwan lanfwet"
-et_forward.rmempty = true
+et_forward.rmempty = false
 
 check = s:taboption("privacy", Flag, "check", translate("Connectivity Check"),
         translate("Enable connectivity check to specify remote device IPs; if all specified IPs fail to ping, "
