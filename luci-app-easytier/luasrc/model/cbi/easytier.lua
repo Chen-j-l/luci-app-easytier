@@ -14,7 +14,6 @@ s=m:section(TypedSection, "easytier", translate("EasyTier Configuration"))
 s.addremove=false
 s.anonymous=true
 s:tab("general", translate("General Settings"))
-s:tab("privacy", translate("Advanced Settings"))
 s:tab("webconsole", translate("Self-hosted Web Server"))
 s:tab("infos", translate("Connection Info"))
 s:tab("upload", translate("Upload Program"))
@@ -136,26 +135,6 @@ proxy_network = s:taboption("general", DynamicList, "proxy_network", translate("
         translate("Export the local network to other peers in the VPN, allowing access to other devices in the current LAN (-n parameter)"))
 proxy_network:depends("etcmd", "etcmd")
 
-mapped_listeners = s:taboption("privacy", DynamicList, "mapped_listeners", translate("Public Addresses of Specified Listeners"),
-        translate("Manually specify the public IP address of this machine, so other nodes can connect to this node using "
-                .. "that address (domain names not supported).<br>For example: tcp://123.123.123.123:11223, multiple entries "
-                .. "can be specified. (--mapped-listeners parameter)"))
-mapped_listeners:depends("listenermode", "ON")
-
-rpc_portal = s:taboption("privacy", Value, "rpc_portal", translate("Portal Address Port"),
-        translate("RPC portal address used for management. 0 means a random port, 12345 means listening on port 12345 on localhost, "
-                .. "0.0.0.0:12345 means listening on port 12345 on all interfaces.<br>The default is 0; it is recommended to "
-                .. "use 15888 to avoid failure in obtaining status information (-r parameter)"))
-rpc_portal.placeholder = "15888"
-rpc_portal.default = "15888"
-rpc_portal.datatype = "range(1,65535)"
-rpc_portal:depends("etcmd", "etcmd")
-
-rpc_portal_whitelist = s:taboption("privacy", Value, "rpc_portal_whitelist", translate("RPC Access Whitelist"),
-        translate("rpc portal whitelist, only allow these addresses to access rpc portal (--rpc-portal-whitelist parameter)"))
-rpc_portal_whitelist.placeholder = "127.0.0.1/32,127.0.0.0/8,::1/128"
-rpc_portal_whitelist:depends("etcmd", "etcmd")
-
 
 local model = nixio.fs.readfile("/proc/device-tree/model") or ""
 local hostname = nixio.fs.readfile("/proc/sys/kernel/hostname") or ""
@@ -185,20 +164,20 @@ instance_name = s:taboption("privacy", Value, "instance_name", translate("Instan
 instance_name.placeholder = "default"
 instance_name:depends("etcmd", "etcmd")
 
-vpn_portal = s:taboption("privacy", Value, "vpn_portal", translate("VPN Portal URL"),
+vpn_portal = s:taboption("general", Value, "vpn_portal", translate("VPN Portal URL"),
         translate("Defines the URL of the VPN portal, allowing other VPN clients to connect.<br>"
                 .. "Example: wg://0.0.0.0:11011/10.14.14.0/24 means the VPN portal is a WireGuard server listening on vpn."
                 .. "example.com:11010, and the VPN clients are in the 10.14.14.0/24 network (--vpn-portal parameter)"))
 vpn_portal.placeholder = "wg://0.0.0.0:11011/10.14.14.0/24"
 vpn_portal:depends("etcmd", "etcmd")
 
-mtu = s:taboption("privacy", Value, "mtu", translate("MTU"),
+mtu = s:taboption("general", Value, "mtu", translate("MTU"),
         translate("MTU for the TUN device, default is 1380 when unencrypted, and 1360 when encrypted"))
 mtu.datatype = "range(1,1500)"
 mtu.placeholder = "1300"
 mtu:depends("etcmd", "etcmd")
 
-default_protocol = s:taboption("privacy", ListValue, "default_protocol", translate("Default Protocol"),
+default_protocol = s:taboption("general", ListValue, "default_protocol", translate("Default Protocol"),
         translate("The default protocol used when connecting to peer nodes (--default-protocol parameter)"))
 default_protocol:value("-",translate("default"))
 default_protocol:value("tcp")
@@ -207,19 +186,15 @@ default_protocol:value("ws")
 default_protocol:value("wss")
 default_protocol:depends("etcmd", "etcmd")
 
-tunname = s:taboption("privacy", Value, "tunname", translate("Virtual Network Interface Name"),
+tunname = s:taboption("general", Value, "tunname", translate("Virtual Network Interface Name"),
         translate("Custom name for the virtual TUN interface (--dev-name parameter)<br>"
                 .. "If using web configuration, please use the same virtual network interface name as in the web config for firewall allowance"))
 tunname.placeholder = "tun0"
 tunname:depends("etcmd", "etcmd")
 tunname:depends("etcmd", "web")
 
-disable_encryption = s:taboption("privacy", Flag, "disable_encryption", translate("Disable Encryption"),
-        translate("Disable encryption for communication with peer nodes. "
-                .. "If encryption is disabled, all other nodes must also have encryption disabled (-u parameter)"))
-disable_encryption:depends("etcmd", "etcmd")
 
-encryption_algorithm = s:taboption("privacy", ListValue, "encryption_algorithm", translate("Encryption Algorithm"),
+encryption_algorithm = s:taboption("general", ListValue, "encryption_algorithm", translate("Encryption Algorithm"),
         translate("encryption algorithm to use, supported: xor, chacha20, aes-gcm, aes-256-gcm, openssl-aes-gcm, openssl-chacha20, openssl-aes-256-gcm. default (aes-gcm) (--encryption-algorithm parameter)"))
 encryption_algorithm.default = "aes-gcm"
 encryption_algorithm:value("xor",translate("xor"))
@@ -231,51 +206,25 @@ encryption_algorithm:value("openssl-chacha20",translate("openssl-chacha20"))
 encryption_algorithm:value("openssl-aes-256-gcm",translate("openssl-aes-256-gcm"))
 encryption_algorithm:depends("etcmd", "etcmd")
 
-multi_thread = s:taboption("privacy", Flag, "multi_thread", translate("Enable Multithreading"),
-        translate("Enable multithreaded operation; single-threaded by default (--multi-thread parameter)"))
-multi_thread:depends("etcmd", "etcmd")
 
-multi_thread_count = s:taboption("privacy", Value, "multi_thread_count", translate("Number of Threads"),
+multi_thread_count = s:taboption("general", Value, "multi_thread_count", translate("Number of Threads"),
         translate("the number of threads to use, default is 2, only effective when multi-thread is enabled, must be greater than 2 (--multi-thread-count parameter)"))
 multi_thread_count.placeholder = "2"
 multi_thread_count:depends("etcmd", "etcmd")
 
-disable_ipv6 = s:taboption("privacy", Flag, "disable_ipv6", translate("Disable IPv6"),
-        translate("Do not use IPv6 (--disable-ipv6 parameter)"))
-disable_ipv6:depends("etcmd", "etcmd")
 
-latency_first = s:taboption("privacy", Flag, "latency_first", translate("Enable Latency First"),
-        translate("Latency-first mode: attempts to forward traffic via the lowest latency path. "
-                .. "By default, the shortest path is used (--latency-first parameter)"))
-latency_first:depends("etcmd", "etcmd")
-
-comp = s:taboption("privacy", ListValue, "comp", translate("Compression Algorithm"),
+comp = s:taboption("general", ListValue, "comp", translate("Compression Algorithm"),
         translate("Compression algorithm to use (--compression parameter)"))
 comp.default = "none"
 comp:value("none",translate("default"))
 comp:value("zstd",translate("zstd"))
 comp:depends("etcmd", "etcmd")
 
-exit_node = s:taboption("privacy", Flag, "exit_node", translate("Enable Exit Node"),
-        translate("Allow this node to act as an exit node (--enable-exit-node parameter)"))
-exit_node:depends("etcmd", "etcmd")
 
-exit_nodes = s:taboption("privacy", DynamicList, "exit_nodes", translate("Exit Node Addresses"),
+exit_nodes = s:taboption("general", DynamicList, "exit_nodes", translate("Exit Node Addresses"),
         translate("Exit nodes to forward all traffic through. These are virtual IPv4 addresses. "
                 .. "Priority is determined by the order in the list (--exit-nodes parameter)"))
 exit_nodes:depends("etcmd", "etcmd")
-
-smoltcp = s:taboption("privacy", Flag, "smoltcp", translate("Use Userspace TCP/IP Stack"),
-        translate("Enable smoltcp stack for subnet proxying (--use-smoltcp parameter)"))
-smoltcp:depends("etcmd", "etcmd")
-
-no_tun = s:taboption("privacy", Flag, "no_tun", translate("No TUN Mode"),
-        translate("Do not create a TUN device; subnet proxying can still be used to access nodes (--no-tun parameter)"))
-no_tun:depends("etcmd", "etcmd")
-
-proxy_forward = s:taboption("privacy", Flag, "proxy_forward", translate("Disable Built-in NAT"),
-        translate("Use system kernel to forward subnet proxy packets, disabling built-in NAT (--proxy-forward-by-system parameter)"))
-proxy_forward:depends("etcmd", "etcmd")
 
 manual_routes = s:taboption("privacy", DynamicList, "manual_routes", translate("Route CIDR"),
         translate("Manually assign route CIDRs. This disables subnet proxying and WireGuard routes propagated from peer nodes "
@@ -283,119 +232,112 @@ manual_routes = s:taboption("privacy", DynamicList, "manual_routes", translate("
 manual_routes.placeholder = "192.168.0.0/16"
 manual_routes:depends("etcmd", "etcmd")
 
-relay_network = s:taboption("privacy", Flag, "relay_network", translate("Forward Whitelisted Network Traffic"),
-        translate("Only forward traffic for whitelisted networks. By default, all networks are allowed"))
-relay_network:depends("etcmd", "etcmd")
 
-whitelist = s:taboption("privacy", DynamicList, "whitelist", translate("Whitelisted Networks"),
+whitelist = s:taboption("general", DynamicList, "whitelist", translate("Whitelisted Networks"),
         translate("Only forward traffic for whitelisted networks. Input is a wildcard string, "
                 .. "e.g., '*' (all networks), 'def*' (networks prefixed with 'def')<br>Multiple networks can be specified. "
                 .. "If empty, forwarding is disabled (--relay-network-whitelist parameter)"))
-whitelist:depends("relay_network", "1")
+whitelist:depends("etcmd", "etcmd")
 
-socks_port = s:taboption("privacy", Value, "socks_port", translate("SOCKS5 Port"),
+socks_port = s:taboption("general", Value, "socks_port", translate("SOCKS5 Port"),
         translate("Enable a SOCKS5 server to allow SOCKS5 clients to access the virtual network. "
                 .. "Leave blank to disable (--socks5 parameter)"))
 socks_port.datatype = "range(1,65535)"
 socks_port.placeholder = "1080"
 socks_port:depends("etcmd", "etcmd")
 
-disable_p2p = s:taboption("privacy", Flag, "disable_p2p", translate("Disable P2P"),
-        translate("Disable P2P communication; only use nodes specified by -p to forward packets (--disable-p2p parameter)"))
-disable_p2p:depends("etcmd", "etcmd")
-
-p2p_only = s:taboption("privacy", Flag, "p2p_only", translate("P2P only"),
-        translate("only communicate with peers that already establish p2p connection. (--p2p-only parameter)"))
-p2p_only:depends("etcmd", "etcmd")
-
-disable_udp = s:taboption("privacy", Flag, "disable_udp", translate("Disable UDP"),
-        translate("Disable UDP hole punching (--disable-udp-hole-punching parameter)"))
-disable_udp:depends("etcmd", "etcmd")
-
-udp_white_port = s:taboption("privacy", Value, "udp_white_port", translate("UDP whitelist"),
-        translate("udp port whitelist. Supports single ports (53) and ranges (5000-6000). (--udp-whitelist parameter)"))
-udp_white_port:depends("etcmd", "etcmd")
-
-disable_tcp = s:taboption("privacy", Flag, "disable_tcp", translate("Disable TCP"),
-        translate("Disable TCP hole punching (--disable-tcp-hole-punching parameter)"))
-disable_tcp:depends("etcmd", "etcmd")
-
-tcp_white_port = s:taboption("privacy", Value, "tcp_white_port", translate("TCP whitelist"),
-        translate("tcp port whitelist. Supports single ports (53) and ranges (5000-6000). (--tcp-whitelist parameter)"))
-tcp_white_port:depends("etcmd", "etcmd")
-
-disable_sym = s:taboption("privacy", Flag, "disable_sym", translate("Disable sym"),
-        translate("if true, disable udp nat hole punching for symmetric nat (NAT4), which is based on birthday attack and may be blocked by ISP. (--disable-sym-hole-punching parameter)"))
-disable_sym:depends("etcmd", "etcmd")
-
-relay_all = s:taboption("privacy", Flag, "relay_all", translate("Allow Forwarding"),
-        translate("Forward RPC packets from all peer nodes, even if they are not in the relay network whitelist.<br>"
-                .. "This can help peer nodes in non-whitelisted networks establish P2P connections. (--relay-all-peer-rpc parameter)"))
-relay_all:depends("etcmd", "etcmd")
-
-bind_device = s:taboption("privacy", Flag, "bind_device", translate("Bind to Physical NIC Only"),
-        translate("Bind the connector socket to the physical device to avoid routing issues.<br>"
-                .. "For example, if the subnet proxy segment conflicts with a peer node, "
-                .. "binding the physical NIC enables normal communication. (--bind-device parameter)"))
-bind_device.default = "0"
-bind_device:depends("etcmd", "etcmd")
-
-kcp_proxy = s:taboption("privacy", Flag, "kcp_proxy", translate("Enable KCP Proxy"),
-        translate("Convert TCP traffic to KCP traffic to reduce latency and improve speed.<br>"
-                .. "All nodes in the virtual network must be using EasyTier version v2.2.0 or higher for this feature. "
-                .. "(--enable-kcp-proxy parameter)"))
-kcp_proxy:depends("etcmd", "etcmd")
-
-kcp_input = s:taboption("privacy", Flag, "kcp_input", translate("Disable KCP Input"),
-        translate("Disallow other nodes from using KCP proxy TCP streams to this node.<br>"
-                .. "KCP proxy-enabled nodes accessing this node will still use the original method. (--disable-kcp-input parameter)"))
-kcp_input:depends("etcmd", "etcmd")
-
-disable_relay_kcp = s:taboption("privacy", Flag, "disable_relay_kcp", translate("Disable relay kcp"),
-        translate("If true, disable relay kcp packets. avoid consuming too many bandwidth. default is false. (--disable-relay-kcp parameter)"))
-disable_relay_kcp:depends("etcmd", "etcmd")
-
-relay_kcp = s:taboption("privacy", Flag, "relay_kcp", translate("Relay foreign network kcp"),
-        translate("If true, allow relay kcp packets from foreign network. default is false (not forward foreign network kcp packets). (--enable-relay-foreign-network-kcp parameter)"))
-relay_kcp:depends("etcmd", "etcmd")
-
-quic_proxy = s:taboption("privacy", Flag, "quic_proxy", translate("Enable QUIC Proxy"),
-        translate("Proxy tcp streams with QUIC, improving the latency and throughput on the network with udp packet loss.<br>"
-                .. "All nodes in the virtual network must be using EasyTier version v2.3.2 or higher for this feature. "
-                .. "(--enable-quic-proxy parameter)"))
-quic_proxy:depends("etcmd", "etcmd")
-
-quic_input = s:taboption("privacy", Flag, "quic_input", translate("Disable QUIC Input"),
-    translate("Do not allow other nodes to use QUIC to proxy tcp streams to this node.") ..
-    translate("When a node with QUIC proxy enabled accesses this node, the original tcp connection is preserved.") ..
-    translate("<br>QUIC proxy-enabled nodes accessing this node will still use the original method. (--disable-quic-input parameter)"))
-quic_input:depends("etcmd", "etcmd")
-
-port_forward = s:taboption("privacy", DynamicList, "port_forward", translate("Port Forwarding"),
+port_forward = s:taboption("general", DynamicList, "port_forward", translate("Port Forwarding"),
         translate("Forward a local port to a remote port within the virtual network.<br>"
                 .. "Example: udp://0.0.0.0:12345/10.126.126.1:23456 means forwarding local UDP port 12345 to 10.126.126.1:23456 "
                 .. "in the virtual network.<br>Multiple entries can be specified. (--port-forward parameter)"))
 port_forward:depends("etcmd", "etcmd")
 
-accept_dns = s:taboption("privacy", Flag, "accept_dns", translate("Enable Magic DNS"),
+accept_dns = s:taboption("general", Flag, "accept_dns", translate("Enable Magic DNS"),
         translate("With Magic DNS, you can access other nodes using domain names, e.g., <hostname>.et.net. "
                 .. "Magic DNS will modify your system DNS settings, please enable with caution. (--accept-dns parameter)"))
 accept_dns:depends("etcmd", "etcmd")
 
-private_mode = s:taboption("privacy", Flag, "private_mode", translate("Enable Private Mode"),
-        translate("When enabled, nodes with a different network name and password are not allowed to handshake or "
-                .. "relay via this node. (--private-mode parameter)"))
-private_mode:depends("etcmd", "etcmd")
 
-foreign_relay_bps_limit = s:taboption("privacy", Value, "foreign_relay_bps_limit", translate("Forwarding Rate"),
+
+foreign_relay_bps_limit = s:taboption("general", Value, "foreign_relay_bps_limit", translate("Forwarding Rate"),
         translate("the maximum bps limit for foreign network relay, default is no limit. unit: BPS (bytes per second). "
                 .. "(--foreign-relay-bps-limit parameter)"))
 foreign_relay_bps_limit:depends("etcmd", "etcmd")
 
-extra_args = s:taboption("privacy", Value, "extra_args", translate("Extra Parameters"),
+
+
+et_flags = s:taboption("general", MultiValue, "et_flags", translate("Advance Control"))
+et_flags:value("latency_first", translate("Enable Latency-First Mode")) -- 开启延迟优先
+et_flags:value("use_smoltcp", translate("Use User-Space Protocol Stack")) -- 使用用户态协议栈
+et_flags:value("enable_ipv6", translate("Disable IPv6")) -- 禁用IPv6
+et_flags:value("latency_first", translate("Enable KCP Proxy")) -- 启用 KCP 代理
+et_flags:value("latency_first", translate("Disable KCP Input")) -- 禁用 KCP 输入
+et_flags:value("latency_first", translate("Enable QUIC Proxy")) -- 启用 QUIC 代理
+et_flags:value("latency_first", translate("Disable QUIC Input")) -- 禁用 QUIC 输入
+et_flags:value("latency_first", translate("Disable P2P")) -- 禁用 P2P
+et_flags:value("latency_first", translate("P2P Only")) -- 仅 P2P
+et_flags:value("latency_first", translate("Lazy P2P")) -- 延迟 P2P
+et_flags:value("latency_first", translate("Bind to Physical Device Only")) -- 仅使用物理网卡
+et_flags:value("latency_first", translate("No TUN Mode")) -- 无 TUN 模式
+et_flags:value("latency_first", translate("Enable Exit Node")) -- 启用出口节点
+et_flags:value("latency_first", translate("Relay RPC Packets")) -- 转发RPC包
+et_flags:value("latency_first", translate("Need P2P")) -- 需要 P2P
+et_flags:value("latency_first", translate("Multi Thread")) -- 启用多线程
+et_flags:value("latency_first", translate("System Forward")) -- 系统转发
+et_flags:value("latency_first", translate("Disable Encryption")) -- 禁用加密
+et_flags:value("latency_first", translate("Disable TCP Hole Punching")) -- 禁用TCP打洞
+et_flags:value("latency_first", translate("Disable UDP Hole Punching")) -- 禁用UDP打洞
+et_flags:value("latency_first", translate("Disable Symmetric NAT Hole Punching")) -- 禁用对称NAT打洞
+et_flags:value("latency_first", translate("Enable Magic DNS")) -- 启用魔法DNS
+et_flags:value("latency_first", translate("Enable Private Mode")) -- 启用私有模式
+et_flags.rmempty = false
+et_flags:depends("etcmd", "etcmd")
+
+
+mapped_listeners = s:taboption("general", DynamicList, "mapped_listeners", translate("Public Addresses of Specified Listeners"),
+        translate("Manually specify the public IP address of this machine, so other nodes can connect to this node using "
+                .. "that address (domain names not supported).<br>For example: tcp://123.123.123.123:11223, multiple entries "
+                .. "can be specified. (--mapped-listeners parameter)"))
+mapped_listeners:depends("listenermode", "ON")
+
+rpc_portal = s:taboption("general", Value, "rpc_portal", translate("Portal Address Port"),
+        translate("RPC portal address used for management. 0 means a random port, 12345 means listening on port 12345 on localhost, "
+                .. "0.0.0.0:12345 means listening on port 12345 on all interfaces.<br>The default is 0; it is recommended to "
+                .. "use 15888 to avoid failure in obtaining status information (-r parameter)"))
+rpc_portal.placeholder = "15888"
+rpc_portal.default = "15888"
+rpc_portal.datatype = "range(1,65535)"
+rpc_portal:depends("etcmd", "etcmd")
+
+rpc_portal_whitelist = s:taboption("general", Value, "rpc_portal_whitelist", translate("RPC Access Whitelist"),
+        translate("rpc portal whitelist, only allow these addresses to access rpc portal (--rpc-portal-whitelist parameter)"))
+rpc_portal_whitelist.placeholder = "127.0.0.1/32,127.0.0.0/8,::1/128"
+rpc_portal_whitelist:depends("etcmd", "etcmd")
+
+
+extra_args = s:taboption("general", Value, "extra_args", translate("Extra Parameters"),
     translate("Additional command-line arguments passed to the backend process"))
 extra_args.placeholder = "--tcp-whitelist 80 --udp-whitelist 53"
 extra_args:depends("etcmd", "etcmd")
+
+-- Network Configuration Options
+auto_config_interface = s:taboption("general", Flag, "auto_config_interface", translate("Auto Configure Interface"),
+        translate("Automatically create and configure the EasyTier network interface"))
+auto_config_interface.default = "1"
+
+auto_config_firewall = s:taboption("general", Flag, "auto_config_firewall", translate("Auto Configure Firewall"),
+        translate("Automatically add and manage firewall rules"))
+auto_config_firewall.default = "1"
+
+et_forward = s:taboption("general", MultiValue, "et_forward", translate("Access Control"),
+        translate("Set traffic permission rules between different network zones"))
+et_forward:value("etfwlan", translate("Allow traffic from EasyTier virtual network to LAN"))
+et_forward:value("etfwwan", translate("Allow traffic from EasyTier virtual network to WAN"))
+et_forward:value("lanfwet", translate("Allow traffic from LAN to EasyTier virtual network"))
+et_forward:value("wanfwet", translate("Allow traffic from WAN to EasyTier virtual network"))
+et_forward.default = "etfwlan etfwwan lanfwet"
+et_forward.rmempty = false
+
 
 log = s:taboption("general", ListValue, "log", translate("Program Log"),
         translate("Runtime log is located at /tmp/easytier.log. View it in the log section above.<br>"
@@ -408,48 +350,18 @@ log:value("info", translate("Info"))
 log:value("debug", translate("Debug"))
 log:value("trace", translate("Trace"))
 
--- Network Configuration Options
-auto_config_interface = s:taboption("privacy", Flag, "auto_config_interface", translate("Auto Configure Interface"),
-        translate("Automatically create and configure the EasyTier network interface"))
-auto_config_interface.default = "1"
-
-interface_netmask = s:taboption("privacy", Value, "interface_netmask", translate("Interface Netmask"),
-        translate("Subnet mask for the EasyTier interface (default: 255.0.0.0)"))
-interface_netmask.placeholder = "255.0.0.0"
-interface_netmask.default = "255.0.0.0"
-interface_netmask.datatype = "ip4addr"
-interface_netmask:depends("auto_config_interface", "1")
-
-et_flags = s:taboption("general", MultiValue, "et_flags", translate("Advance Control"))
-et_flags:value("", translate(""))
-
-et_flags.rmempty = false
-
-auto_config_firewall = s:taboption("privacy", Flag, "auto_config_firewall", translate("Auto Configure Firewall"),
-        translate("Automatically add and manage firewall rules"))
-auto_config_firewall.default = "1"
-
-et_forward = s:taboption("privacy", MultiValue, "et_forward", translate("Access Control"),
-        translate("Set traffic permission rules between different network zones"))
-et_forward:value("etfwlan", translate("Allow traffic from EasyTier virtual network to LAN"))
-et_forward:value("etfwwan", translate("Allow traffic from EasyTier virtual network to WAN"))
-et_forward:value("lanfwet", translate("Allow traffic from LAN to EasyTier virtual network"))
-et_forward:value("wanfwet", translate("Allow traffic from WAN to EasyTier virtual network"))
-et_forward.default = "etfwlan etfwwan lanfwet"
-et_forward.rmempty = false
-
-check = s:taboption("privacy", Flag, "check", translate("Connectivity Check"),
+check = s:taboption("general", Flag, "check", translate("Connectivity Check"),
         translate("Enable connectivity check to specify remote device IPs; if all specified IPs fail to ping, "
                 .. "the EasyTier program will restart."))
 
-checkip = s:taboption("privacy", DynamicList, "checkip", translate("Check IPs"),
+checkip = s:taboption("general", DynamicList, "checkip", translate("Check IPs"),
         translate("Make sure the remote device IPs entered here are correct and reachable; "
                 .. "incorrect entries may cause ping failures and repeated program restarts."))
 checkip.rmempty = true
 checkip.datatype = "ip4addr"
 checkip:depends("check", "1")
 
-checktime = s:taboption("privacy", ListValue, "checktime", translate("Interval Time (minutes)"),
+checktime = s:taboption("general", ListValue, "checktime", translate("Interval Time (minutes)"),
         translate("Interval time for checking connectivity; how often the specified IPs are pinged."))
 for s = 1, 60 do
     checktime:value(s)
