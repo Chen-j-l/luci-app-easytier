@@ -31,35 +31,20 @@ btncq.write = function()
   luci.sys.call("/etc/init.d/easytier restart >/dev/null 2>&1 &")  -- 执行重启命令
 end
 
-etcmd = s:taboption("general", ListValue, "etcmd", translate("Startup Method"),
-        translate("Official Web Console: <a href=\"https://easytier.cn/web\" target=\"_blank\">https://easytier.cn/web</a><br>"
-                .. "Official Configuration File Generator: <a href=\"https://easytier.cn/web/index.html#/config_generator\" target=\"_blank\">"
-                .. "https://easytier.cn/web/index.html#/config_generator</a><br>Please note to set the RPC port to 15888"))
+etcmd = s:taboption("general", ListValue, "etcmd", translate("Startup Method"))
 etcmd.default = "etcmd"
 etcmd:value("etcmd", translate("Default"))
 etcmd:value("web", translate("Web Configuration"))
 
-et_config = s:taboption("general", TextValue, "et_config", translate("Configuration File"),
-        translate("The configuration file is located at /etc/easytier/config.toml<br>"
-                .. "The command-line startup parameters and the parameters in this configuration file are not synchronized<br>"
-                .. "Make sure to specify the TUN interface name and port to enable automatic firewall allowance"))
+et_config = s:taboption("general", TextValue, "et_config", translate("Configuration File"))
 et_config.rows = 18
 et_config.wrap = "off"
 et_config.readonly = true
 et_config:depends("etcmd", "etcmd")
-
 et_config.cfgvalue = function(self, section)
     return nixio.fs.readfile("/etc/easytier/config.toml") or ""
 end
-et_config.write = function(self, section, value)
-    local dir = "/etc/easytier/"
-    local file = dir .. "config.toml"
-    -- 检查目录是否存在，如果不存在则创建
-    if not nixio.fs.access(dir) then
-        nixio.fs.mkdir(dir)
-    end
-    nixio.fs.writefile(file, value:gsub("\r\n", "\n"))
-end
+et_config.write = function(self, section, value) end
 
 web_config = s:taboption("general", Value, "web_config", translate("Web Server Address"),
         translate("Web configuration server address. (-w parameter)<br>"
@@ -69,38 +54,32 @@ web_config = s:taboption("general", Value, "web_config", translate("Web Server A
 web_config.placeholder = "admin"
 web_config:depends("etcmd", "web")
 
-network_name = s:taboption("general", Value, "network_name", translate("Network Name"),
-        translate("The network name used to identify this VPN network (--network-name parameter)"))
-network_name.password = true
-network_name.placeholder = "easytier-name"
-network_name.maxlength = 64
-network_name.validate = function(self, value)
-    if value and value ~= "" and value:match("[^%w%-_]") then
-        return nil, translate("Only alphanumeric characters, hyphens and underscores allowed")
-    end
-    return value
-end
-network_name:depends("etcmd", "etcmd")
+instance_name = s:taboption("general", Value, "instance_name", translate("Instance Name"),
+        translate("Used to identify the VPN node instance on the same machine"))
+instance_name.placeholder = "default"
+instance_name:depends("etcmd", "etcmd")
 
-network_secret = s:taboption("general", Value, "network_secret", translate("Network Secret"),
-        translate("Network secret used to verify whether this node belongs to the VPN network (--network-secret parameter)"))
-network_secret.password = true
-network_secret.placeholder = "easytier-password"
-network_secret.maxlength = 128
-network_secret:depends("etcmd", "etcmd")
+local model = nixio.fs.readfile("/proc/device-tree/model") or ""
+local hostname = nixio.fs.readfile("/proc/sys/kernel/hostname") or ""
+model = model:gsub("\n", "")
+hostname = hostname:gsub("\n", "")
+local device_name = (model ~= "" and model) or (hostname ~= "" and hostname) or "OpenWrt"
+device_name = device_name:gsub(" ", "_")
+hostname_opt = s:taboption("general", Value, "hostname", translate("Hostname"),
+        translate("The hostname used to identify this device"))
+hostname_opt.placeholder = device_name
 
-ip_dhcp = s:taboption("general", Flag, "ip_dhcp", translate("Enable DHCP"),
+dhcp = s:taboption("general", Flag, "dhcp", translate("Enable DHCP"),
         translate("IP address will be automatically determined and assigned by EasyTier, starting from 10.0.0.1 by default. "
-                .. "Warning: When using DHCP, if an IP conflict occurs in the network, the IP will be automatically changed. (-d parameter)"))
-ip_dhcp:depends("etcmd", "etcmd")
+                .. "Warning: When using DHCP, if an IP conflict occurs in the network, the IP will be automatically changed."))
+dhcp.rmempty = false
+dhcp:depends("etcmd", "etcmd")
 
 ipaddr = s:taboption("general", Value, "ipaddr", translate("Interface IP Address"),
-        translate("The IPv4 address of this VPN node. If left empty, this node will only forward packets and will not "
-                .. "create a TUN device. (-i parameter)"))
+        translate("The IPv4 address of this VPN node))
 ipaddr.datatype = "ip4addr"
-ipaddr.placeholder = "10.0.0.1"
-ipaddr:depends("etcmd", "etcmd")
-ipaddr:depends("ip_dhcp", "0")
+ipaddr.placeholder = "10.0.0.1/24"
+ipaddr:depends("dhcp", 0)
 
 ip6addr = s:taboption("general", Value, "ip6addr", translate("Interface IPV6 Address"),
         translate("ipv6 address of this vpn node, can be used together with ipv4 for dual-stack operation"
@@ -109,43 +88,66 @@ ip6addr.datatype = "ip6addr"
 ip6addr.placeholder = "2001:db8::1"
 ip6addr:depends("etcmd", "etcmd")
 
-listenport = s:taboption("general", DynamicList, "listenport", translate("listenport"),
-		translate("example: udp://0.0.0.0:11010	quic://[::]:11011"))
+listeners = s:taboption("general", DynamicList, "listeners", translate("listeners"),
+translate("Listen Port setting"))
+listeners.placeholder = "tcp://0.0.0.0:11010"
+listeners:depends("etcmd", "etcmd")
 
+mapped_listeners = s:taboption("general", DynamicList, "mapped_listeners", translate("Public Addresses of Specified Listeners"),
+        translate("Manually specify the public IP address of this machine, so other nodes can connect to this node using "
+                .. "that address (domain names not supported).<br>For example: tcp://123.123.123.123:11223, multiple entries "
+                .. "can be specified"))
+mapped_listeners:depends("etcmd", "etcmd")
+		
+proxy_cidrs = s:taboption("general", DynamicList, "proxy_cidrs", translate("Subnet Proxy"),
+        translate("Export the local network to other peers in the VPN, allowing access to other devices in the current LAN"))
+proxy_cidrs:depends("etcmd", "etcmd")
 
+manual_routes = s:taboption("privacy", DynamicList, "manual_routes", translate("Route CIDR"),
+        translate("Manually assign route CIDRs. This disables subnet proxying and WireGuard routes propagated from peer nodes "))
+manual_routes.placeholder = "192.168.0.0/16"
+manual_routes:depends("etcmd", "etcmd")
 
-peeradd = s:taboption("general", DynamicList, "peeradd", translate("Peer Nodes"),
+exit_nodes = s:taboption("general", DynamicList, "exit_nodes", translate("Exit Node Addresses"),
+        translate("Exit nodes to forward all traffic through. These are virtual IPv4 addresses. "
+                .. "Priority is determined by the order in the list (--exit-nodes parameter)"))
+exit_nodes:depends("etcmd", "etcmd")
+
+socks = s:taboption("general", Value, "socks", translate("SOCKS5 Port"),
+        translate("Enable a SOCKS5 server to allow SOCKS5 clients to access the virtual network. "
+                .. "Leave blank to disable (--socks5 parameter)"))
+socks.datatype = "range(1,65535)"
+socks.placeholder = "1080"
+socks:depends("etcmd", "etcmd")
+		
+network_name = s:taboption("general", Value, "network_name", translate("Network Name"),
+        translate("The network name used to identify this VPN network (--network-name parameter)"))
+network_name.password = true
+network_name.placeholder = "easytier-name"
+network_name.maxlength = 64
+network_name.validate = function(self, value)
+    if not value or value == "" then
+        return nil, translate("network_name cannot be empty")
+    end
+	if value:match("[^%w%-_]") then
+		return nil, translate("Only alphanumeric characters, hyphens and underscores allowed")
+	end
+    return value
+end
+network_name:depends("etcmd", "etcmd")
+
+network_secret = s:taboption("general", Value, "network_secret", translate("Network Secret"),
+        translate("Network secret used to verify whether this node belongs to the VPN network"))
+network_secret.placeholder = "easytier-password"
+network_secret.maxlength = 128
+network_secret:depends("etcmd", "etcmd")
+		
+peers = s:taboption("general", DynamicList, "peers", translate("Peer Nodes"),
         translate("Initial connected peer nodes (-p parameter)<br>"
                 .. "Public server status check: <a href='https://uptime.easytier.cn' target='_blank'>"
                 .. "Click here to check</a>"))
-peeradd.placeholder = "tcp://public.easytier.top:11010"
-peeradd:value("tcp://public.easytier.top:11010", translate("Official Server - tcp://public.easytier.top:11010"))
-peeradd:depends("etcmd", "etcmd")
-
---[=[
-external_node = s:taboption("general", Value, "external_node", translate("Shared Node Address"),
-        translate("Use a public shared node to discover peer nodes, same function as the parameter above (-e parameter)"))
-external_node.default = ""
-external_node.placeholder = "tcp://public.easytier.top:11010"
-external_node:value("tcp://public.easytier.top:11010", translate("Official Server - tcp://public.easytier.top:11010"))
-external_node:depends("etcmd", "etcmd")
-]=]
-
-proxy_network = s:taboption("general", DynamicList, "proxy_network", translate("Subnet Proxy"),
-        translate("Export the local network to other peers in the VPN, allowing access to other devices in the current LAN (-n parameter)"))
-proxy_network:depends("etcmd", "etcmd")
-
-
-local model = nixio.fs.readfile("/proc/device-tree/model") or ""
-local hostname = nixio.fs.readfile("/proc/sys/kernel/hostname") or ""
-model = model:gsub("\n", "")
-hostname = hostname:gsub("\n", "")
-local device_name_default = (model ~= "" and model) or (hostname ~= "" and hostname) or "OpenWrt"
-device_name_default = device_name_default:gsub(" ", "_")
-hostname_opt = s:taboption("general", Value, "desvice_name", translate("Hostname"),
-        translate("The hostname used to identify this device (--hostname parameter)"))
-hostname_opt.placeholder = device_name_default
-hostname_opt.default = device_name_default
+peers.placeholder = "tcp://public.easytier.top:11010"
+peers:depends("etcmd", "etcmd")
 
 uuid = s:taboption("general", Value, "uuid", translate("UUID"),
         translate("Unique identifier used to recognize this device when connecting to the web console, for issuing configuration files"))
@@ -158,11 +160,6 @@ end
 uuid.write = function(self, section, value)
     nixio.fs.writefile("/etc/easytier/et_machine_id", value:gsub("\r\n", "\n"))
 end
-
-instance_name = s:taboption("privacy", Value, "instance_name", translate("Instance Name"),
-        translate("Used to identify the VPN node instance on the same machine. (-m parameter)"))
-instance_name.placeholder = "default"
-instance_name:depends("etcmd", "etcmd")
 
 vpn_portal = s:taboption("general", Value, "vpn_portal", translate("VPN Portal URL"),
         translate("Defines the URL of the VPN portal, allowing other VPN clients to connect.<br>"
@@ -186,13 +183,10 @@ default_protocol:value("ws")
 default_protocol:value("wss")
 default_protocol:depends("etcmd", "etcmd")
 
-tunname = s:taboption("general", Value, "tunname", translate("Virtual Network Interface Name"),
+dev_name = s:taboption("general", Value, "dev_name", translate("Virtual Network Interface Name"),
         translate("Custom name for the virtual TUN interface (--dev-name parameter)<br>"
                 .. "If using web configuration, please use the same virtual network interface name as in the web config for firewall allowance"))
-tunname.placeholder = "tun0"
-tunname:depends("etcmd", "etcmd")
-tunname:depends("etcmd", "web")
-
+dev_name.placeholder = "easytier0"
 
 encryption_algorithm = s:taboption("general", ListValue, "encryption_algorithm", translate("Encryption Algorithm"),
         translate("encryption algorithm to use, supported: xor, chacha20, aes-gcm, aes-256-gcm, openssl-aes-gcm, openssl-chacha20, openssl-aes-256-gcm. default (aes-gcm) (--encryption-algorithm parameter)"))
@@ -212,26 +206,12 @@ multi_thread_count = s:taboption("general", Value, "multi_thread_count", transla
 multi_thread_count.placeholder = "2"
 multi_thread_count:depends("etcmd", "etcmd")
 
-
-comp = s:taboption("general", ListValue, "comp", translate("Compression Algorithm"),
+data_compress_algo = s:taboption("general", ListValue, "data_compress_algo", translate("Compression Algorithm"),
         translate("Compression algorithm to use (--compression parameter)"))
-comp.default = "none"
-comp:value("none",translate("default"))
-comp:value("zstd",translate("zstd"))
-comp:depends("etcmd", "etcmd")
-
-
-exit_nodes = s:taboption("general", DynamicList, "exit_nodes", translate("Exit Node Addresses"),
-        translate("Exit nodes to forward all traffic through. These are virtual IPv4 addresses. "
-                .. "Priority is determined by the order in the list (--exit-nodes parameter)"))
-exit_nodes:depends("etcmd", "etcmd")
-
-manual_routes = s:taboption("privacy", DynamicList, "manual_routes", translate("Route CIDR"),
-        translate("Manually assign route CIDRs. This disables subnet proxying and WireGuard routes propagated from peer nodes "
-                .. "(--manual-routes parameter)"))
-manual_routes.placeholder = "192.168.0.0/16"
-manual_routes:depends("etcmd", "etcmd")
-
+data_compress_algo.default = "none"
+data_compress_algo:value("none",translate("none"))
+data_compress_algo:value("zstd",translate("zstd"))
+data_compress_algo:depends("etcmd", "etcmd")
 
 whitelist = s:taboption("general", DynamicList, "whitelist", translate("Whitelisted Networks"),
         translate("Only forward traffic for whitelisted networks. Input is a wildcard string, "
@@ -239,66 +219,43 @@ whitelist = s:taboption("general", DynamicList, "whitelist", translate("Whitelis
                 .. "If empty, forwarding is disabled (--relay-network-whitelist parameter)"))
 whitelist:depends("etcmd", "etcmd")
 
-socks_port = s:taboption("general", Value, "socks_port", translate("SOCKS5 Port"),
-        translate("Enable a SOCKS5 server to allow SOCKS5 clients to access the virtual network. "
-                .. "Leave blank to disable (--socks5 parameter)"))
-socks_port.datatype = "range(1,65535)"
-socks_port.placeholder = "1080"
-socks_port:depends("etcmd", "etcmd")
-
 port_forward = s:taboption("general", DynamicList, "port_forward", translate("Port Forwarding"),
         translate("Forward a local port to a remote port within the virtual network.<br>"
                 .. "Example: udp://0.0.0.0:12345/10.126.126.1:23456 means forwarding local UDP port 12345 to 10.126.126.1:23456 "
                 .. "in the virtual network.<br>Multiple entries can be specified. (--port-forward parameter)"))
 port_forward:depends("etcmd", "etcmd")
 
-accept_dns = s:taboption("general", Flag, "accept_dns", translate("Enable Magic DNS"),
-        translate("With Magic DNS, you can access other nodes using domain names, e.g., <hostname>.et.net. "
-                .. "Magic DNS will modify your system DNS settings, please enable with caution. (--accept-dns parameter)"))
-accept_dns:depends("etcmd", "etcmd")
-
-
-
 foreign_relay_bps_limit = s:taboption("general", Value, "foreign_relay_bps_limit", translate("Forwarding Rate"),
         translate("the maximum bps limit for foreign network relay, default is no limit. unit: BPS (bytes per second). "
                 .. "(--foreign-relay-bps-limit parameter)"))
 foreign_relay_bps_limit:depends("etcmd", "etcmd")
 
-
-
 et_flags = s:taboption("general", MultiValue, "et_flags", translate("Advance Control"))
 et_flags:value("latency_first", translate("Enable Latency-First Mode")) -- 开启延迟优先
 et_flags:value("use_smoltcp", translate("Use User-Space Protocol Stack")) -- 使用用户态协议栈
 et_flags:value("enable_ipv6", translate("Disable IPv6")) -- 禁用IPv6
-et_flags:value("latency_first", translate("Enable KCP Proxy")) -- 启用 KCP 代理
-et_flags:value("latency_first", translate("Disable KCP Input")) -- 禁用 KCP 输入
-et_flags:value("latency_first", translate("Enable QUIC Proxy")) -- 启用 QUIC 代理
-et_flags:value("latency_first", translate("Disable QUIC Input")) -- 禁用 QUIC 输入
-et_flags:value("latency_first", translate("Disable P2P")) -- 禁用 P2P
-et_flags:value("latency_first", translate("P2P Only")) -- 仅 P2P
-et_flags:value("latency_first", translate("Lazy P2P")) -- 延迟 P2P
-et_flags:value("latency_first", translate("Bind to Physical Device Only")) -- 仅使用物理网卡
-et_flags:value("latency_first", translate("No TUN Mode")) -- 无 TUN 模式
-et_flags:value("latency_first", translate("Enable Exit Node")) -- 启用出口节点
-et_flags:value("latency_first", translate("Relay RPC Packets")) -- 转发RPC包
-et_flags:value("latency_first", translate("Need P2P")) -- 需要 P2P
-et_flags:value("latency_first", translate("Multi Thread")) -- 启用多线程
-et_flags:value("latency_first", translate("System Forward")) -- 系统转发
-et_flags:value("latency_first", translate("Disable Encryption")) -- 禁用加密
-et_flags:value("latency_first", translate("Disable TCP Hole Punching")) -- 禁用TCP打洞
-et_flags:value("latency_first", translate("Disable UDP Hole Punching")) -- 禁用UDP打洞
-et_flags:value("latency_first", translate("Disable Symmetric NAT Hole Punching")) -- 禁用对称NAT打洞
-et_flags:value("latency_first", translate("Enable Magic DNS")) -- 启用魔法DNS
-et_flags:value("latency_first", translate("Enable Private Mode")) -- 启用私有模式
+et_flags:value("enable_kcp_proxy", translate("Enable KCP Proxy")) -- 启用 KCP 代理
+et_flags:value("disable_kcp_input", translate("Disable KCP Input")) -- 禁用 KCP 输入
+et_flags:value("enable_quic_proxy", translate("Enable QUIC Proxy")) -- 启用 QUIC 代理
+et_flags:value("disable_quic_input", translate("Disable QUIC Input")) -- 禁用 QUIC 输入
+et_flags:value("disable_p2p", translate("Disable P2P")) -- 禁用 P2P
+et_flags:value("p2p_only", translate("P2P Only")) -- 仅 P2P
+et_flags:value("lazy_p2p", translate("Lazy P2P")) -- 延迟 P2P
+et_flags:value("bind_device", translate("Bind to Physical Device Only")) -- 仅使用物理网卡
+et_flags:value("no_tun", translate("No TUN Mode")) -- 无 TUN 模式
+et_flags:value("enable_exit_node", translate("Enable Exit Node")) -- 启用出口节点
+et_flags:value("relay_all_peer_rpc", translate("Relay RPC Packets")) -- 转发RPC包
+et_flags:value("need_p2p", translate("Need P2P")) -- 需要 P2P
+et_flags:value("multi_thread", translate("Multi Thread")) -- 启用多线程
+et_flags:value("proxy_forward_by_system", translate("System Forward")) -- 系统转发
+et_flags:value("disable_encryption", translate("Disable Encryption")) -- 禁用加密
+et_flags:value("disable_tcp_hole_punching", translate("Disable TCP Hole Punching")) -- 禁用TCP打洞
+et_flags:value("disable_udp_hole_punching", translate("Disable UDP Hole Punching")) -- 禁用UDP打洞
+et_flags:value("disable_sym_hole_punching", translate("Disable Symmetric NAT Hole Punching")) -- 禁用对称NAT打洞
+et_flags:value("accept_dns", translate("Enable Magic DNS")) -- 启用魔法DNS
+et_flags:value("private_mode", translate("Enable Private Mode")) -- 启用私有模式
 et_flags.rmempty = false
 et_flags:depends("etcmd", "etcmd")
-
-
-mapped_listeners = s:taboption("general", DynamicList, "mapped_listeners", translate("Public Addresses of Specified Listeners"),
-        translate("Manually specify the public IP address of this machine, so other nodes can connect to this node using "
-                .. "that address (domain names not supported).<br>For example: tcp://123.123.123.123:11223, multiple entries "
-                .. "can be specified. (--mapped-listeners parameter)"))
-mapped_listeners:depends("listenermode", "ON")
 
 rpc_portal = s:taboption("general", Value, "rpc_portal", translate("Portal Address Port"),
         translate("RPC portal address used for management. 0 means a random port, 12345 means listening on port 12345 on localhost, "
@@ -350,24 +307,6 @@ log:value("info", translate("Info"))
 log:value("debug", translate("Debug"))
 log:value("trace", translate("Trace"))
 
-check = s:taboption("general", Flag, "check", translate("Connectivity Check"),
-        translate("Enable connectivity check to specify remote device IPs; if all specified IPs fail to ping, "
-                .. "the EasyTier program will restart."))
-
-checkip = s:taboption("general", DynamicList, "checkip", translate("Check IPs"),
-        translate("Make sure the remote device IPs entered here are correct and reachable; "
-                .. "incorrect entries may cause ping failures and repeated program restarts."))
-checkip.rmempty = true
-checkip.datatype = "ip4addr"
-checkip:depends("check", "1")
-
-checktime = s:taboption("general", ListValue, "checktime", translate("Interval Time (minutes)"),
-        translate("Interval time for checking connectivity; how often the specified IPs are pinged."))
-for s = 1, 60 do
-    checktime:value(s)
-end
-checktime:depends("check", "1")
-
 local process_status = luci.sys.exec("ps | grep easytier-core| grep -v grep")
 
 -- 连接信息 tab - 使用 HTM 模板展示
@@ -383,112 +322,6 @@ btnrm.write = function()
   os.execute("rm -rf /tmp/easytier*.tag /tmp/easytier*.newtag /tmp/easytier-core_*")
 end
 
-
-easytierbin = s:taboption("upload", Value, "easytierbin", translate("easytier-core Binary Path"),
-        translate("Customize the storage path for easytier-core. Make sure to provide the full path and filename. "
-                .. "If the specified path has insufficient space, it will automatically move to /tmp/easytier-core"))
-easytierbin.placeholder = "/usr/bin/easytier-core"
-easytierbin.default = "/usr/bin/easytier-core"
-
-webbin = s:taboption("upload", Value, "webbin", translate("easytier-web Binary Path"),
-        translate("Customize the storage path for easytier-web. Make sure to provide the full path and filename, "
-                .. "then upload the installer"))
-webbin.placeholder = "/usr/bin/easytier-web"
-webbin.default = "/usr/bin/easytier-web"
-
-github_proxys = s:taboption("upload", Value, "github_proxys", translate("GitHub Proxy URLs"),
-        translate("Space-separated list of GitHub proxy URLs for downloading binaries. "
-                .. "Leave empty to use default proxies."))
-github_proxys.placeholder = "https://ghproxy.net/ https://gh-proxy.com/"
-
-fallback_version = s:taboption("upload", Value, "fallback_version", translate("Fallback Version"),
-        translate("Fallback version to use when unable to fetch the latest version from GitHub."))
-fallback_version.placeholder = "v2.5.0"
-fallback_version.default = "v2.5.0"
-
-local upload = s:taboption("upload", FileUpload, "upload_file")
-upload.optional = true
-upload.default = ""
-upload.template = "easytier/other_upload"
-upload.description = translate("You can directly upload the binary programs easytier-core and easytier-cli, or a compressed .zip archive. "
-        .. "Uploading a new version will automatically overwrite the old one. Download link: "
-        .. "<a href='https://github.com/EasyTier/EasyTier/releases' target='_blank'>github.com/EasyTier/EasyTier</a><br>"
-        .. "The uploaded files will be saved in the /tmp folder. If a custom program path is specified, "
-        .. "the program will be automatically moved to that path when started.<br>")
-local um = s:taboption("upload",DummyValue, "", nil)
-um.template = "easytier/other_dvalue"
-
-local dir, fd, chunk
-dir = "/tmp/"
-nixio.fs.mkdir(dir)
-http.setfilehandler(
-    function(meta, chunk, eof)
-        if not fd then
-            if not meta then return end
-
-            if meta and chunk then fd = nixio.open(dir .. meta.file, "w") end
-
-            if not fd then
-                um.value = translate("Error: Upload failed!")
-                return
-            end
-        end
-
-        if chunk and fd then
-            fd:write(chunk)
-        end
-
-        if eof and fd then
-            fd:close()
-            fd = nil
-            um.value = translate("File has been uploaded to") .. ' "/tmp/' .. meta.file .. '"'
-
-            if string.sub(meta.file, -4) == ".zip" then
-                local file_path = dir .. meta.file
-                os.execute("unzip -q " .. file_path .. " -d " .. dir)
-                local extracted_dir = "/tmp/easytier-linux-*/"
-                os.execute("mv " .. extracted_dir .. "easytier-cli /tmp/easytier-cli")
-                os.execute("mv " .. extracted_dir .. "easytier-core /tmp/easytier-core")
-                os.execute("mv " .. extracted_dir .. "easytier-web-embed /tmp/easytier-web-embed")
-                if nixio.fs.access("/tmp/easytier-cli") then
-                    um.value = um.value .. "\n" .. translate("- Program /tmp/easytier-cli uploaded successfully, restart the plugin to take effect")
-                end
-                if nixio.fs.access("/tmp/easytier-core") then
-                    um.value = um.value .. "\n" .. translate("- Program /tmp/easytier-core uploaded successfully, restart the plugin to take effect")
-                end
-                if nixio.fs.access("/tmp/easytier-web-embed") then
-                    um.value = um.value .. "\n" .. translate("- Program /tmp/easytier-web uploaded successfully, restart the plugin to take effect")
-                end
-            end
-
-	        if string.sub(meta.file, -7) == ".tar.gz" then
-                local file_path = dir .. meta.file
-                os.execute("tar -xzf " .. file_path .. " -C " .. dir)
-		        local extracted_dir = "/tmp/easytier-linux-*/"
-                os.execute("mv " .. extracted_dir .. "easytier-cli /tmp/easytier-cli")
-                os.execute("mv " .. extracted_dir .. "easytier-core /tmp/easytier-core")
-		        os.execute("mv " .. extracted_dir .. "easytier-web-embed /tmp/easytier-web-embed")
-                if nixio.fs.access("/tmp/easytier-cli") then
-                    um.value = um.value .. "\n" .. translate("- Program /tmp/easytier-cli uploaded successfully, restart the plugin to take effect")
-                end
-                if nixio.fs.access("/tmp/easytier-core") then
-                    um.value = um.value .. "\n" .. translate("- Program /tmp/easytier-core uploaded successfully, restart the plugin to take effect")
-                end
-                if nixio.fs.access("/tmp/easytier-web-embed") then
-                    um.value = um.value .. "\n" .. translate("- Program /tmp/easytier-web uploaded successfully, restart the plugin to take effect")
-                end
-            end
-
-            os.execute("chmod +x /tmp/easytier-core")
-            os.execute("chmod +x /tmp/easytier-cli")
-            os.execute("chmod +x /tmp/easytier-web-embed")
-		   
-        end
-    end
-)
-if luci.http.formvalue("upload") then
-    local f = luci.http.formvalue("ulfile")
-end
 
 -- Self-hosted Web Console tab options
 
