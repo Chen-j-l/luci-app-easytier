@@ -42,79 +42,83 @@ local function calc_uptime(start_time_file)
 end
 
 function index()
-	if not nixio.fs.access("/etc/config/easytier") then
-		return
+    -- luci.sys.exec("echo '' > /tmp/test")
+	if nixio.fs.access("/etc/config/easytier") then
+	    entry({"admin", "vpn", "easytier"}, alias("admin", "vpn", "easytier", "easytier"),_("EasyTier"), 46).dependent = true
+	    entry({"admin", "vpn", "easytier", "easytier"}, cbi("easytier"),_("EasyTier"), 47).leaf = true
+	    entry({"admin", "vpn", "easytier", "easytier_log"}, form("easytier_log"),_("core log"), 48).leaf = true
+	    entry({"admin", "vpn", "easytier", "get_log"}, call("get_log")).leaf = true
+	    entry({"admin", "vpn", "easytier", "clear_log"}, call("clear_log")).leaf = true
+	    entry({"admin", "vpn", "easytier", "status"}, call("act_status")).leaf = true
+	    entry({"admin", "vpn", "easytier", "web_status"}, call("web_status")).leaf = true
+	    entry({"admin", "vpn", "easytier", "conninfo"}, call("act_conninfo")).leaf = true
 	end
-                  
-        entry({"admin", "vpn", "easytier"}, alias("admin", "vpn", "easytier", "easytier"),_("EasyTier"), 46).dependent = true
-	entry({"admin", "vpn", "easytier", "easytier"}, cbi("easytier"),_("EasyTier"), 47).leaf = true
-	entry({"admin", "vpn",  "easytier",  "easytier_log"}, form("easytier_log"),_("core log"), 48).leaf = true
-	entry({"admin", "vpn", "easytier", "get_log"}, call("get_log")).leaf = true
-	entry({"admin", "vpn", "easytier", "clear_log"}, call("clear_log")).leaf = true
-	entry({"admin", "vpn",  "easytier",  "easytierweb_log"}, form("easytierweb_log"),_("web log"), 49).leaf = true
-	entry({"admin", "vpn", "easytier", "get_wlog"}, call("get_wlog")).leaf = true
-	entry({"admin", "vpn", "easytier", "clear_wlog"}, call("clear_wlog")).leaf = true
-	entry({"admin", "vpn", "easytier", "status"}, call("act_status")).leaf = true
-	entry({"admin", "vpn", "easytier", "conninfo"}, call("act_conninfo")).leaf = true
+    if nixio.fs.access("/etc/config/easytierweb") then
+        entry({"admin", "vpn", "easytier", "easytierweb"}, cbi("easytierweb"),_("EasyTier web server"), 49).leaf = true
+        entry({"admin", "vpn", "easytier", "easytierweb_log"}, form("easytierweb_log"),_("web log"), 50).leaf = true
+    	entry({"admin", "vpn", "easytier", "get_wlog"}, call("get_wlog")).leaf = true
+    	entry({"admin", "vpn", "easytier", "clear_wlog"}, call("clear_wlog")).leaf = true
+	end
 end
 
 function act_status()
 	local e = {}
 	local sys  = require "luci.sys"
-	local uci  = require "luci.model.uci".cursor()
-	local port = tonumber(uci:get_first("easytier", "easytier", "web_html_port"))
+	local nixio = require "nixio"
 	e.crunning = luci.sys.call("pgrep easytier-core >/dev/null") == 0
-	e.wrunning = luci.sys.call("pgrep easytier-web >/dev/null") == 0
-	e.port = (port or 0)
 	
 	-- 使用 Lua 原生计算运行时长
 	e.etsta = calc_uptime("/tmp/easytier_time")
-	e.etwebsta = calc_uptime("/tmp/easytierweb_time")
 	
-	-- 获取 CPU 和内存使用率（使用原始命令）
 	local command2 = io.popen('test ! -z "`pidof easytier-core`" && (top -b -n1 | grep -E "$(pidof easytier-core)" 2>/dev/null | grep -v grep | awk \'{for (i=1;i<=NF;i++) {if ($i ~ /easytier-core/) break; else cpu=i}} END {print $cpu}\')')
 	e.etcpu = command2:read("*all")
 	command2:close()
 	
-	local command3 = io.popen("test ! -z `pidof easytier-core` && (cat /proc/$(pidof easytier-core | awk '{print $NF}')/status | grep -w VmRSS | awk '{printf \"%.2f MB\", $2/1024}')")
+    local command3 = io.popen("test ! -z `pidof easytier-core` && (cat /proc/$(pidof easytier-core | awk '{print $NF}')/status | grep -w VmRSS | awk '{printf \"%.2f MB\", $2/1024}')")
 	e.etram = command3:read("*all")
 	command3:close()
-	
-	local command4 = io.popen('test ! -z "`pidof easytier-web`" && (top -b -n1 | grep -E "$(pidof easytier-web)" 2>/dev/null | grep -v grep | awk \'{for (i=1;i<=NF;i++) {if ($i ~ /easytier-web/) break; else cpu=i}} END {print $cpu}\')')
-	e.etwebcpu = command4:read("*all")
-	command4:close()
-	
-	local command5 = io.popen("test ! -z `pidof easytier-web` && (cat /proc/$(pidof easytier-web | awk '{print $NF}')/status | grep -w VmRSS | awk '{printf \"%.2f MB\", $2/1024}')")
-	e.etwebram = command5:read("*all")
-	command5:close()
-	
-	-- 获取版本信息
-	local cached_newtag = safe_read_file("/tmp/easytiernew.tag")
-	if cached_newtag and cached_newtag ~= "" then
-		e.etnewtag = cached_newtag:gsub("[\r\n]+", "")
-	else
-		e.etnewtag = safe_exec("curl -L -k -s --connect-timeout 3 --user-agent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36' https://api.github.com/repos/EasyTier/EasyTier/releases/latest | grep tag_name | sed 's/[^0-9.]*//g'")
-		if e.etnewtag ~= "" then
-			local f = io.open("/tmp/easytiernew.tag", "w")
-			if f then f:write(e.etnewtag); f:close() end
-		end
-	end
-	
-	local cached_tag = safe_read_file("/tmp/easytier.tag")
-	if cached_tag and cached_tag ~= "" then
-		e.ettag = cached_tag:gsub("[\r\n]+", "")
-	else
-		local easytierbin = uci:get_first("easytier", "easytier", "easytierbin") or "/usr/bin/easytier-core"
-		e.ettag = safe_exec(easytierbin .. " -V | sed 's/^[^0-9]*//'")
-		if e.ettag == "" then e.ettag = "?" end
-		local f = io.open("/tmp/easytier.tag", "w")
-		if f then f:write(e.ettag); f:close() end
-	end
 
+	local easytier_cli = "/usr/bin/easytier-cli"
+	if nixio.fs.stat(easytier_cli) and nixio.fs.access(easytier_cli, "x") then
+	    e.ettag = safe_exec(easytier_cli ..  " -V | sed 's/^[^0-9]*//'")
+    else
+        e.ettag = ""
+    end
+    
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
 
+function web_status()
+	local e = {}
+	local sys  = require "luci.sys"
+	local nixio = require "nixio"
+	local uci  = require "luci.model.uci".cursor()
+	local port = tonumber(uci:get_first("easytier", "easytierweb", "html_port"))
+	e.wrunning = luci.sys.call("pgrep easytier-web >/dev/null") == 0
+	e.port = (port or 0)
+	
+	-- 使用 Lua 原生计算运行时长
+	e.etwebsta = calc_uptime("/tmp/easytierweb_time")
+
+	local command4 = io.popen('test ! -z "`pidof easytier-web`" && (top -b -n1 | grep -E "$(pidof easytier-web)" 2>/dev/null | grep -v grep | awk \'{for (i=1;i<=NF;i++) {if ($i ~ /easytier-web/) break; else cpu=i}} END {print $cpu}\')')
+	e.etwebcpu = command4:read("*all")
+	command4:close()
+	
+    local command5 = io.popen("test ! -z `pidof easytier-web` && (cat /proc/$(pidof easytier-web | awk '{print $NF}')/status | grep -w VmRSS | awk '{printf \"%.2f MB\", $2/1024}')")
+	e.etwebram = command5:read("*all")
+	command5:close()
+    
+    local easytier_web = "/usr/bin/easytier-web"
+	if nixio.fs.stat(easytier_web) and nixio.fs.access(easytier_web, "x") then
+	    e.etwtag = safe_exec(easytier_web ..  " -V | sed 's/^[^0-9]*//'")
+    else
+        e.etwtag = ""
+    end
+    
+	luci.http.prepare_content("application/json")
+	luci.http.write_json(e)
+end
 
 function get_log()
     local log = ""
