@@ -4,10 +4,16 @@ uci -q batch <<-EOF >/dev/null
 	delete ucitrack.@easytier[-1]
 	add ucitrack easytier
 	set ucitrack.@easytier[-1].init=easytier
+
+	delete ucitrack.@easytierweb[-1]
+	add ucitrack easytierweb
+	set ucitrack.@easytierweb[-1].init=easytierweb
 	commit ucitrack
 EOF
 
 chmod +x /etc/init.d/easytier
+chmod +x /etc/init.d/easytierweb
 /etc/init.d/easytier enable
+/etc/init.d/easytierweb enable
 rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
 exit 0
