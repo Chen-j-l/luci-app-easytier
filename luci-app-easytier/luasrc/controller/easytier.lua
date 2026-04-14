@@ -46,7 +46,6 @@ function index()
 	if nixio.fs.access("/etc/config/easytier") then
 	    entry({"admin", "vpn", "easytier"}, alias("admin", "vpn", "easytier", "easytier"),_("EasyTier"), 46).dependent = true
 	    entry({"admin", "vpn", "easytier", "easytier"}, cbi("easytier"),_("EasyTier"), 47).leaf = true
-	    entry({"admin", "vpn", "easytier", "easytier_log"}, form("easytier_log"),_("core log"), 48).leaf = true
 	    entry({"admin", "vpn", "easytier", "get_log"}, call("get_log")).leaf = true
 	    entry({"admin", "vpn", "easytier", "clear_log"}, call("clear_log")).leaf = true
 	    entry({"admin", "vpn", "easytier", "status"}, call("act_status")).leaf = true
@@ -54,8 +53,7 @@ function index()
 	    entry({"admin", "vpn", "easytier", "conninfo"}, call("act_conninfo")).leaf = true
 	end
     if nixio.fs.access("/etc/config/easytierweb") then
-        entry({"admin", "vpn", "easytier", "easytierweb"}, cbi("easytierweb"),_("EasyTier web server"), 49).leaf = true
-        entry({"admin", "vpn", "easytier", "easytierweb_log"}, form("easytierweb_log"),_("web log"), 50).leaf = true
+        entry({"admin", "vpn", "easytier", "easytierweb"}, cbi("easytierweb"),_("EasyTier web server"), 48).leaf = true
     	entry({"admin", "vpn", "easytier", "get_wlog"}, call("get_wlog")).leaf = true
     	entry({"admin", "vpn", "easytier", "clear_wlog"}, call("clear_wlog")).leaf = true
 	end

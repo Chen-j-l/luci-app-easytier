@@ -5,12 +5,12 @@
 // 中文翻译映射
 var translations = {
 	// 表头翻译
-	"Virtual IP": "虚拟IP",
+	"Virtual_IP": "虚拟IP",
 	"Hostname": "主机名",
-	"Proxy CIDRs": "代理CIDR",
-	"Peer ID": "节点ID",
-	"Public IPv4": "公网IPv4",
-	"UDP Stun Type": "UDP穿透类型",
+	"Proxy_CIDRs": "代理CIDR",
+	"Peer_ID": "节点ID",
+	"Public_IPv4": "公网IPv4",
+	"UDP_Stun_Type": "UDP穿透类型",
 	"Interface IPv4": "IPv4地址",
 	"Interface IPv6": "IPv6地址",
 	"ipv4": "IPv4地址",
@@ -164,21 +164,6 @@ function updateConnInfo(data) {
 	}
 }
 
-// 初始加载
-document.addEventListener('DOMContentLoaded', function() {
-	refreshConnInfo();
-});
-
-// 自动刷新 (每5秒)
-XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
-	function(x, data) {
-		updateConnInfo(data);
-		var ts = document.getElementById('conninfo_timestamp');
-		if (ts) {
-			ts.innerHTML = '最后更新: ' + new Date().toLocaleTimeString();
-		}
-	}
-);
 //]]></script>
 
 <style>
@@ -292,7 +277,6 @@ XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
 			<span class="conninfo-section-title">节点信息</span>
 		</div>
 		<div id="conninfo_content_node" class="conninfo-section-content">
-			<em><%:Collecting data...%></em>
 		</div>
 	</div>
 	
@@ -302,7 +286,6 @@ XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
 			<span class="conninfo-section-title">节点列表</span>
 		</div>
 		<div id="conninfo_content_peer" class="conninfo-section-content">
-			<em><%:Collecting data...%></em>
 		</div>
 	</div>
 	
@@ -312,7 +295,6 @@ XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
 			<span class="conninfo-section-title">连接器信息</span>
 		</div>
 		<div id="conninfo_content_connector" class="conninfo-section-content">
-			<em><%:Collecting data...%></em>
 		</div>
 	</div>
 	
@@ -322,7 +304,6 @@ XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
 			<span class="conninfo-section-title">STUN信息</span>
 		</div>
 		<div id="conninfo_content_stun" class="conninfo-section-content">
-			<em><%:Collecting data...%></em>
 		</div>
 	</div>
 	
@@ -332,7 +313,6 @@ XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
 			<span class="conninfo-section-title">路由信息</span>
 		</div>
 		<div id="conninfo_content_route" class="conninfo-section-content">
-			<em><%:Collecting data...%></em>
 		</div>
 	</div>
 	
@@ -342,7 +322,6 @@ XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
 			<span class="conninfo-section-title">节点中心</span>
 		</div>
 		<div id="conninfo_content_peercenter" class="conninfo-section-content">
-			<em><%:Collecting data...%></em>
 		</div>
 	</div>
 	
@@ -352,7 +331,6 @@ XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
 			<span class="conninfo-section-title">VPN门户</span>
 		</div>
 		<div id="conninfo_content_vpnportal" class="conninfo-section-content">
-			<em><%:Collecting data...%></em>
 		</div>
 	</div>
 	
@@ -362,7 +340,6 @@ XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
 			<span class="conninfo-section-title">TCP/KCP代理</span>
 		</div>
 		<div id="conninfo_content_proxy" class="conninfo-section-content">
-			<em><%:Collecting data...%></em>
 		</div>
 	</div>
 	
@@ -372,7 +349,6 @@ XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
 			<span class="conninfo-section-title">ACL规则</span>
 		</div>
 		<div id="conninfo_content_acl" class="conninfo-section-content">
-			<em><%:Collecting data...%></em>
 		</div>
 	</div>
 	
@@ -382,7 +358,6 @@ XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
 			<span class="conninfo-section-title">映射监听器</span>
 		</div>
 		<div id="conninfo_content_mappedlistener" class="conninfo-section-content">
-			<em><%:Collecting data...%></em>
 		</div>
 	</div>
 	
@@ -392,7 +367,6 @@ XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
 			<span class="conninfo-section-title">统计信息</span>
 		</div>
 		<div id="conninfo_content_stats" class="conninfo-section-content">
-			<em><%:Collecting data...%></em>
 		</div>
 	</div>
 	
@@ -402,7 +376,6 @@ XHR.poll(5, '<%=url([[admin]], [[vpn]], [[easytier]], [[conninfo]])%>', null,
 			<span class="conninfo-section-title">启动参数</span>
 		</div>
 		<div id="conninfo_content_cmdline" class="conninfo-section-content">
-			<em><%:Collecting data...%></em>
 		</div>
 	</div>
 </div>

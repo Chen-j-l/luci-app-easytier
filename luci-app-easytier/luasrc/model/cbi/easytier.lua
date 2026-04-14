@@ -9,14 +9,12 @@ m.description = translate("A simple, secure, decentralized VPN solution for intr
   
 m:section(SimpleSection).template  = "easytier/easytier_status"
 
--- easytier-core
 s=m:section(TypedSection, "easytier", translate("EasyTier Configuration"))
 s.addremove=false
 s.anonymous=true
 s:tab("general", translate("General Settings"))
-s:tab("webconsole", translate("Self-hosted Web Server"))
 s:tab("infos", translate("Connection Info"))
-s:tab("upload", translate("Upload Program"))
+s:tab("logs", translate("logs"))
 
 switch = s:taboption("general",Flag, "enabled", translate("Enable"))
 switch.rmempty = false
@@ -29,6 +27,7 @@ btncq:depends("enabled", "1")
 btncq.write = function()
   luci.sys.call("rm -rf /tmp/easytier*.tag /tmp/easytier*.newtag >/dev/null 2>&1 &") -- 执行删除版本号信息
   luci.sys.call("/etc/init.d/easytier restart >/dev/null 2>&1 &")  -- 执行重启命令
+  luci.sys.call("sleep 3") -- 等3S后刷新页面
 end
 
 etcmd = s:taboption("general", ListValue, "etcmd", translate("Startup Method"))
@@ -36,7 +35,7 @@ etcmd.default = "etcmd"
 etcmd:value("etcmd", translate("Default"))
 etcmd:value("web", translate("Web Configuration"))
 
-et_config = s:taboption("general", TextValue, "et_config", translate("Configuration File"))
+et_config = s:taboption("general", TextValue, "et_config", translate("Configuration View"))
 et_config.rows = 18
 et_config.wrap = "off"
 et_config.readonly = true
@@ -55,7 +54,7 @@ web_config.placeholder = "admin"
 web_config:depends("etcmd", "web")
 
 instance_name = s:taboption("general", Value, "instance_name", translate("Instance Name"),
-        translate("Used to identify the VPN node instance on the same machine"))
+        translate("Used to identify the VPN node instance on the same machine. (-m parameter)"))
 instance_name.placeholder = "default"
 instance_name:depends("etcmd", "etcmd")
 
@@ -76,7 +75,7 @@ dhcp.rmempty = false
 dhcp:depends("etcmd", "etcmd")
 
 ipaddr = s:taboption("general", Value, "ipaddr", translate("Interface IP Address"),
-        translate("The IPv4 address of this VPN node))
+        translate("The IPv4 address of this VPN node"))
 ipaddr.datatype = "ip4addr"
 ipaddr.placeholder = "10.0.0.1/24"
 ipaddr:depends("dhcp", 0)
@@ -85,11 +84,11 @@ ip6addr = s:taboption("general", Value, "ip6addr", translate("Interface IPV6 Add
         translate("ipv6 address of this vpn node, can be used together with ipv4 for dual-stack operation"
                 .. "(--ipv6 parameter)"))
 ip6addr.datatype = "ip6addr"
-ip6addr.placeholder = "2001:db8::1"
+ip6addr.placeholder = "2001:db8::1/64"
 ip6addr:depends("etcmd", "etcmd")
 
-listeners = s:taboption("general", DynamicList, "listeners", translate("listeners"),
-translate("Listen Port setting"))
+listeners = s:taboption("general", DynamicList, "listeners", translate("Listeners"),
+        translate("Listen Port setting"))
 listeners.placeholder = "tcp://0.0.0.0:11010"
 listeners:depends("etcmd", "etcmd")
 
@@ -98,12 +97,12 @@ mapped_listeners = s:taboption("general", DynamicList, "mapped_listeners", trans
                 .. "that address (domain names not supported).<br>For example: tcp://123.123.123.123:11223, multiple entries "
                 .. "can be specified"))
 mapped_listeners:depends("etcmd", "etcmd")
-		
+
 proxy_cidrs = s:taboption("general", DynamicList, "proxy_cidrs", translate("Subnet Proxy"),
-        translate("Export the local network to other peers in the VPN, allowing access to other devices in the current LAN"))
+        translate("Export the local network to other peers in the VPN, allowing access to other devices in the current LAN (-n parameter)"))
 proxy_cidrs:depends("etcmd", "etcmd")
 
-manual_routes = s:taboption("privacy", DynamicList, "manual_routes", translate("Route CIDR"),
+manual_routes = s:taboption("general", DynamicList, "manual_routes", translate("Route CIDR"),
         translate("Manually assign route CIDRs. This disables subnet proxying and WireGuard routes propagated from peer nodes "))
 manual_routes.placeholder = "192.168.0.0/16"
 manual_routes:depends("etcmd", "etcmd")
@@ -119,35 +118,54 @@ socks = s:taboption("general", Value, "socks", translate("SOCKS5 Port"),
 socks.datatype = "range(1,65535)"
 socks.placeholder = "1080"
 socks:depends("etcmd", "etcmd")
-		
+
 network_name = s:taboption("general", Value, "network_name", translate("Network Name"),
         translate("The network name used to identify this VPN network (--network-name parameter)"))
-network_name.password = true
+network_name.required = true
+network_name.rmempty = false
 network_name.placeholder = "easytier-name"
-network_name.maxlength = 64
 network_name.validate = function(self, value)
     if not value or value == "" then
         return nil, translate("network_name cannot be empty")
     end
-	if value:match("[^%w%-_]") then
-		return nil, translate("Only alphanumeric characters, hyphens and underscores allowed")
-	end
     return value
 end
 network_name:depends("etcmd", "etcmd")
 
 network_secret = s:taboption("general", Value, "network_secret", translate("Network Secret"),
-        translate("Network secret used to verify whether this node belongs to the VPN network"))
+        translate("Network secret used to verify whether this node belongs to the VPN network (--network-secret parameter)"))
+network_secret.required = true
+network_secret.rmempty = false
 network_secret.placeholder = "easytier-password"
-network_secret.maxlength = 128
 network_secret:depends("etcmd", "etcmd")
-		
+
 peers = s:taboption("general", DynamicList, "peers", translate("Peer Nodes"),
         translate("Initial connected peer nodes (-p parameter)<br>"
                 .. "Public server status check: <a href='https://uptime.easytier.cn' target='_blank'>"
                 .. "Click here to check</a>"))
 peers.placeholder = "tcp://public.easytier.top:11010"
 peers:depends("etcmd", "etcmd")
+
+
+
+rpc_portal = s:taboption("general", Value, "rpc_portal", translate("Portal Address Port"),
+        translate("RPC portal address used for management. 0 means a random port, 12345 means listening on port 12345 on localhost, "
+                .. "0.0.0.0:12345 means listening on port 12345 on all interfaces.<br>The default is 0; it is recommended to "
+                .. "use 15888 to avoid failure in obtaining status information (-r parameter)"))
+rpc_portal.placeholder = "15888"
+rpc_portal.default = "15888"
+rpc_portal.datatype = "range(1,65535)"
+rpc_portal:depends("etcmd", "etcmd")
+
+rpc_portal_whitelist = s:taboption("general", Value, "rpc_portal_whitelist", translate("RPC Access Whitelist"),
+        translate("rpc portal whitelist, only allow these addresses to access rpc portal (--rpc-portal-whitelist parameter)"))
+rpc_portal_whitelist.placeholder = "127.0.0.1/32,127.0.0.0/8,::1/128"
+rpc_portal_whitelist:depends("etcmd", "etcmd")
+
+relay_network_whitelist = s:taboption("general", Value, "relay_network_whitelist", translate("Network Access Whitelist"),
+        translate("relay networkl whitelist, only allow these addresses to relay"))
+relay_network_whitelist.placeholder = "10.0.0.1/24,192.168.1.0/24,fd00::/64"
+relay_network_whitelist:depends("etcmd", "etcmd")
 
 uuid = s:taboption("general", Value, "uuid", translate("UUID"),
         translate("Unique identifier used to recognize this device when connecting to the web console, for issuing configuration files"))
@@ -160,6 +178,7 @@ end
 uuid.write = function(self, section, value)
     nixio.fs.writefile("/etc/easytier/et_machine_id", value:gsub("\r\n", "\n"))
 end
+
 
 vpn_portal = s:taboption("general", Value, "vpn_portal", translate("VPN Portal URL"),
         translate("Defines the URL of the VPN portal, allowing other VPN clients to connect.<br>"
@@ -189,28 +208,23 @@ dev_name = s:taboption("general", Value, "dev_name", translate("Virtual Network 
 dev_name.placeholder = "easytier0"
 
 encryption_algorithm = s:taboption("general", ListValue, "encryption_algorithm", translate("Encryption Algorithm"),
-        translate("encryption algorithm to use, supported: xor, chacha20, aes-gcm, aes-256-gcm, openssl-aes-gcm, openssl-chacha20, openssl-aes-256-gcm. default (aes-gcm) (--encryption-algorithm parameter)"))
+        translate("encryption algorithm to use, supported: xor, chacha20, aes-gcm, aes-gcm-256, openssl-aes128-gcm, openssl-aes256-gcm, openssl-chacha20. default (aes-gcm) (--encryption-algorithm parameter)"))
 encryption_algorithm.default = "aes-gcm"
 encryption_algorithm:value("xor",translate("xor"))
 encryption_algorithm:value("chacha20",translate("chacha20"))
 encryption_algorithm:value("aes-gcm",translate("aes-gcm"))
-encryption_algorithm:value("aes-256-gcm",translate("aes-256-gcm"))
-encryption_algorithm:value("openssl-aes-gcm",translate("openssl-aes-gcm"))
+encryption_algorithm:value("aes-gcm-256",translate("aes-gcm-256"))
+encryption_algorithm:value("openssl-aes128-gcm",translate("openssl-aes128-gcm"))
+encryption_algorithm:value("openssl-aes256-gcm",translate("openssl-aes256-gcm"))
 encryption_algorithm:value("openssl-chacha20",translate("openssl-chacha20"))
-encryption_algorithm:value("openssl-aes-256-gcm",translate("openssl-aes-256-gcm"))
 encryption_algorithm:depends("etcmd", "etcmd")
-
-
-multi_thread_count = s:taboption("general", Value, "multi_thread_count", translate("Number of Threads"),
-        translate("the number of threads to use, default is 2, only effective when multi-thread is enabled, must be greater than 2 (--multi-thread-count parameter)"))
-multi_thread_count.placeholder = "2"
-multi_thread_count:depends("etcmd", "etcmd")
 
 data_compress_algo = s:taboption("general", ListValue, "data_compress_algo", translate("Compression Algorithm"),
         translate("Compression algorithm to use (--compression parameter)"))
 data_compress_algo.default = "none"
-data_compress_algo:value("none",translate("none"))
-data_compress_algo:value("zstd",translate("zstd"))
+data_compress_algo:value("1",translate("none"))
+-- data_compress_algo:value("1",translate("lz4"))
+data_compress_algo:value("2",translate("zstd"))
 data_compress_algo:depends("etcmd", "etcmd")
 
 whitelist = s:taboption("general", DynamicList, "whitelist", translate("Whitelisted Networks"),
@@ -218,6 +232,11 @@ whitelist = s:taboption("general", DynamicList, "whitelist", translate("Whitelis
                 .. "e.g., '*' (all networks), 'def*' (networks prefixed with 'def')<br>Multiple networks can be specified. "
                 .. "If empty, forwarding is disabled (--relay-network-whitelist parameter)"))
 whitelist:depends("etcmd", "etcmd")
+
+relay_all = s:taboption("general", Flag, "relay_all", translate("Allow Forwarding"),
+        translate("Forward RPC packets from all peer nodes, even if they are not in the relay network whitelist.<br>"
+                .. "This can help peer nodes in non-whitelisted networks establish P2P connections. (--relay-all-peer-rpc parameter)"))
+relay_all:depends("etcmd", "etcmd")
 
 port_forward = s:taboption("general", DynamicList, "port_forward", translate("Port Forwarding"),
         translate("Forward a local port to a remote port within the virtual network.<br>"
@@ -257,44 +276,17 @@ et_flags:value("private_mode", translate("Enable Private Mode")) -- 启用私有
 et_flags.rmempty = false
 et_flags:depends("etcmd", "etcmd")
 
-rpc_portal = s:taboption("general", Value, "rpc_portal", translate("Portal Address Port"),
-        translate("RPC portal address used for management. 0 means a random port, 12345 means listening on port 12345 on localhost, "
-                .. "0.0.0.0:12345 means listening on port 12345 on all interfaces.<br>The default is 0; it is recommended to "
-                .. "use 15888 to avoid failure in obtaining status information (-r parameter)"))
-rpc_portal.placeholder = "15888"
-rpc_portal.default = "15888"
-rpc_portal.datatype = "range(1,65535)"
-rpc_portal:depends("etcmd", "etcmd")
-
-rpc_portal_whitelist = s:taboption("general", Value, "rpc_portal_whitelist", translate("RPC Access Whitelist"),
-        translate("rpc portal whitelist, only allow these addresses to access rpc portal (--rpc-portal-whitelist parameter)"))
-rpc_portal_whitelist.placeholder = "127.0.0.1/32,127.0.0.0/8,::1/128"
-rpc_portal_whitelist:depends("etcmd", "etcmd")
-
+multi_thread_count = s:taboption("general", Value, "multi_thread_count", translate("Number of Threads"),
+        translate("the number of threads to use, default is 2, only effective when multi-thread is enabled, must be greater than 2 (--multi-thread-count parameter)"))
+multi_thread_count.placeholder = "2"
+multi_thread_count.datatype = "uinteger"
+-- multi_thread_count:depends(et_flags, function(v) return v and v:find("multi_thread", nil, true) end)
+multi_thread_count:depends("etcmd", "etcmd")
 
 extra_args = s:taboption("general", Value, "extra_args", translate("Extra Parameters"),
     translate("Additional command-line arguments passed to the backend process"))
 extra_args.placeholder = "--tcp-whitelist 80 --udp-whitelist 53"
 extra_args:depends("etcmd", "etcmd")
-
--- Network Configuration Options
-auto_config_interface = s:taboption("general", Flag, "auto_config_interface", translate("Auto Configure Interface"),
-        translate("Automatically create and configure the EasyTier network interface"))
-auto_config_interface.default = "1"
-
-auto_config_firewall = s:taboption("general", Flag, "auto_config_firewall", translate("Auto Configure Firewall"),
-        translate("Automatically add and manage firewall rules"))
-auto_config_firewall.default = "1"
-
-et_forward = s:taboption("general", MultiValue, "et_forward", translate("Access Control"),
-        translate("Set traffic permission rules between different network zones"))
-et_forward:value("etfwlan", translate("Allow traffic from EasyTier virtual network to LAN"))
-et_forward:value("etfwwan", translate("Allow traffic from EasyTier virtual network to WAN"))
-et_forward:value("lanfwet", translate("Allow traffic from LAN to EasyTier virtual network"))
-et_forward:value("wanfwet", translate("Allow traffic from WAN to EasyTier virtual network"))
-et_forward.default = "etfwlan etfwwan lanfwet"
-et_forward.rmempty = false
-
 
 log = s:taboption("general", ListValue, "log", translate("Program Log"),
         translate("Runtime log is located at /tmp/easytier.log. View it in the log section above.<br>"
@@ -314,80 +306,10 @@ conninfo = s:taboption("infos", DummyValue, "_conninfo")
 conninfo.template = "easytier/easytier_conninfo"
 conninfo.rawhtml = true
 
-btnrm = s:taboption("infos", Button, "btnrm")
-btnrm.inputtitle = translate("Check for Updates")
-btnrm.description = translate("Click the button to start checking for updates and refresh the version display in the status bar above")
-btnrm.inputstyle = "apply"
-btnrm.write = function()
-  os.execute("rm -rf /tmp/easytier*.tag /tmp/easytier*.newtag /tmp/easytier-core_*")
-end
-
-
--- Self-hosted Web Console tab options
-
-web_enabled = s:taboption("webconsole", Flag, "web_enabled", translate("Enable"))
-web_enabled.rmempty = false
-
-web_btncq = s:taboption("webconsole", Button, "web_btncq", translate("Restart"))
-web_btncq.inputtitle = translate("Restart")
-web_btncq.description = translate("Quickly restart once without modifying any parameters")
-web_btncq.inputstyle = "apply"
-web_btncq.write = function()
-  luci.sys.call("/etc/init.d/easytier restart >/dev/null 2>&1 &")
-end
-
-web_db_path = s:taboption("webconsole", Value, "web_db_path", translate("Database File Path"),
-        translate("Path to the sqlite3 database file used to store all data. (-d parameter)"))
-web_db_path.default = "/etc/easytier/et.db"
-
-web_protocol = s:taboption("webconsole", ListValue, "web_protocol", translate("Listening Protocol"),
-        translate("Configure the server's listening protocol for easytier-core to connect. (-p parameter)"))
-web_protocol.default = "udp"
-web_protocol:value("udp",translate("UDP"))
-web_protocol:value("tcp",translate("TCP"))
-web_protocol:value("ws",translate("WS"))
-
-web_port = s:taboption("webconsole", Value, "web_port", translate("Server Port"),
-        translate("Configure the server's listening port for easytier-core to connect. (-c parameter)"))
-web_port.datatype = "range(1,65535)"
-web_port.placeholder = "22020"
-web_port.default = "22020"
-
-web_fw_web = s:taboption("webconsole", Flag, "web_fw_web", translate("WAN access to WEB"),
-        translate("Automatically add firewall rules to allow WAN access to this WEB console"))
-
-web_api_port = s:taboption("webconsole", Value, "web_api_port", translate("API Port"),
-        translate("Listening port of the RESTful server, used as ApiHost by the web frontend. (-a parameter)"))
-web_api_port.datatype = "range(1,65535)"
-web_api_port.placeholder = "11211"
-web_api_port.default = "11211"
-
-web_html_port = s:taboption("webconsole", Value, "web_html_port", translate("Web Interface Port"),
-        translate("Frontend listening port for the web dashboard server. Leave empty to disable. (-l parameter)"))
-web_html_port.datatype = "range(1,65535)"
-web_html_port.default = "11211"
-
-web_fw_api = s:taboption("webconsole", Flag, "web_fw_api", translate("WAN access to API"),
-        translate("Automatically add firewall rules to allow WAN access to the API control page"))
-
-web_api_host = s:taboption("webconsole", Value, "web_api_host", translate("Default API Server URL"),
-        translate("The URL of the API server, used for connecting the web frontend. (--api-host parameter)<br>"
-                .. "Example: http://[current device IP or resolved domain name]:[API port]"))
-
-web_geoip_db = s:taboption("webconsole", Value, "web_geoip_db", translate("GEOIP_DB Path"),
-        translate("GeoIP2 database file path used to locate the client. Defaults to an embedded file (country-level information only)."
-		.. "<br>Recommended: https://github.com/P3TERX/GeoLite.mmdb (--geoip-db parameter)"))
-web_geoip_db.placeholder = "/etc/easytier/GeoLite.mmdb"
-
-web_weblog = s:taboption("webconsole", ListValue, "web_weblog", translate("Program Log"),
-        translate("Runtime log located at /tmp/easytierweb.log, viewable in the log section above.<br>"
-                .. "Levels: Error < Warning < Info < Debug < Trace"))
-web_weblog.default = "off"
-web_weblog:value("off", translate("Off"))
-web_weblog:value("error", translate("Error"))
-web_weblog:value("warn", translate("Warning"))
-web_weblog:value("info", translate("Info"))
-web_weblog:value("debug", translate("Debug"))
-web_weblog:value("trace", translate("Trace"))
+-- 日志 tab - 使用 HTM 模板展示
+logs = s:taboption("logs", DummyValue, "logs", translate("logs"))
+logs.template = "easytier/easytier_log"
+logs.rawhtml = true
 
 return m
+
