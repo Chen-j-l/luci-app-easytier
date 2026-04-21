@@ -1,0 +1,10 @@
+
+config easytierweb
+	option enabled '0'
+	option db_path '/etc/easytier/et.db'
+	option web_protocol 'udp'
+	option web_port '22020'
+	option api_port '11211'
+	option html_port '11211'
+	option weblog 'off'
+

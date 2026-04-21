@@ -1,0 +1,110 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2020 OpenWrt.org
+
+START=99
+USE_PROCD=1
+
+
+get_tz() {
+	SET_TZ=""
+	[ -e "/etc/localtime" ] && return
+	for tzfile in /etc/TZ /var/etc/TZ
+	do
+		[ -e "$tzfile" ] || continue
+		tz="$(cat $tzfile 2>/dev/null)"
+	done
+	[ -z "$tz" ] && return
+	SET_TZ=$tz
+}
+
+start_web() {
+	webbin="/usr/bin/easytier-web"
+	if [ ! -f "$webbin" ] ; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') easytierweb : $webbin 程序文件不存在" >>/tmp/easytierweb.log
+        return 1
+    fi
+    if [ ! -x "$webbin" ] ; then
+        chmod +x "$webbin"
+    fi
+    
+	echo "$(date '+%Y-%m-%d %H:%M:%S') easytierweb : 开始启动${webbin} " >>/tmp/easytierweb.log
+	db_path="$(uci -q get easytierweb.@easytierweb[0].db_path)"
+	web_protocol="$(uci -q get easytierweb.@easytierweb[0].web_protocol)"
+	web_port="$(uci -q get easytierweb.@easytierweb[0].web_port)"
+	api_port="$(uci -q get easytierweb.@easytierweb[0].api_port)"
+	html_port="$(uci -q get easytierweb.@easytierweb[0].html_port)"
+	weblog="$(uci -q get easytierweb.@easytierweb[0].weblog)"
+	api_host="$(uci -q get easytierweb.@easytierweb[0].api_host)"
+	geoip_db="$(uci -q get easytierweb.@easytierweb[0].geoip_db)"
+	procd_open_instance "easytierweb"
+	get_tz
+	[ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
+	web_cmd=""
+	[ -z "$db_path" ] || web_cmd="${web_cmd} -d $db_path"
+	[ -z "$web_protocol" ] || web_cmd="${web_cmd} -p $web_protocol"
+	[ -z "$web_port" ] || web_cmd="${web_cmd} -c $web_port"
+	[ -z "$api_port" ] || web_cmd="${web_cmd} -a $api_port"
+	[ -z "$api_host" ] || web_cmd="${web_cmd} --api-host $api_host"
+	[ -z "$geoip_db" ] || web_cmd="${web_cmd} --geoip-db $geoip_db"
+	if [ -z "$html_port" ] ; then
+		web_cmd="${web_cmd} --no-web"
+	else
+		web_cmd="${web_cmd} -l $html_port"
+	fi
+	if [ "$weblog" != "off" ] ; then
+		web_cmd="${web_cmd} --console-log-level $weblog"	
+	fi
+	
+	procd_set_param command /bin/sh -c "
+		${webbin} ${web_cmd} >> /tmp/easytierweb.log 2>&1 &
+		ET_WEB_PID=\$!
+		{
+			while true; do
+				LOG_SIZE=\$(ls -l /tmp/easytierweb.log | awk '{print int(\$5/1024)}')
+				if [ \$LOG_SIZE -gt 5120 ]; then
+					tail -n 500 /tmp/easytierweb.log > /tmp/easytierweb.log.tmp
+					mv /tmp/easytierweb.log.tmp /tmp/easytierweb.log
+				fi
+				sleep 300
+			done
+		} &
+		LOG_MANAGEMENT_PID=\$!
+		trap \"kill -TERM \$ET_WEB_PID; kill -TERM \$LOG_MANAGEMENT_PID; exit\" SIGINT SIGTERM EXIT
+		wait \$ET_WEB_PID
+	"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+
+	echo `date +%s` > /tmp/easytierweb_time
+	echo "$(date '+%Y-%m-%d %H:%M:%S') easytierweb : 启动完成！ " >>/tmp/easytierweb.log
+}
+
+start_service() {
+	echo "start.."
+	echo "" >/tmp/easytierweb.log
+
+	[ "$(uci -q get easytierweb.@easytierweb[0].enabled)" = "1" ] && start_web
+}
+
+stop_service() {
+	echo "stop.."
+	if [ "$(uci -q get easytierweb.@easytierweb[0].enabled)" = "0" ] ; then
+    	ps | grep 'easytier-web' | grep -v grep | awk '{print $1}' | xargs kill >/dev/null 2>&1
+    	ps | grep 'easytier-web' | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+    	echo "$(date '+%Y-%m-%d %H:%M:%S') easytierweb : 已停止！ " >>/tmp/easytierweb.log
+	fi
+}
+
+reload_service() {
+	stop
+	start
+}
+
+service_triggers() {
+	procd_add_reload_trigger "easytierweb"
+	#如果WAN网络接口上线则触发重新启动easytier
+        procd_add_interface_trigger "interface.*.up" wan /etc/init.d/easytierweb reload
+}
+
