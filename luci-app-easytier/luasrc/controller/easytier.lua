@@ -42,21 +42,17 @@ local function calc_uptime(start_time_file)
 end
 
 function index()
-    -- luci.sys.exec("echo '' > /tmp/test")
-	if nixio.fs.access("/etc/config/easytier") then
-	    entry({"admin", "vpn", "easytier"}, alias("admin", "vpn", "easytier", "easytier"),_("EasyTier"), 46).dependent = true
-	    entry({"admin", "vpn", "easytier", "easytier"}, cbi("easytier"),_("EasyTier"), 47).leaf = true
-	    entry({"admin", "vpn", "easytier", "get_log"}, call("get_log")).leaf = true
-	    entry({"admin", "vpn", "easytier", "clear_log"}, call("clear_log")).leaf = true
-	    entry({"admin", "vpn", "easytier", "status"}, call("act_status")).leaf = true
-	    entry({"admin", "vpn", "easytier", "web_status"}, call("web_status")).leaf = true
-	    entry({"admin", "vpn", "easytier", "conninfo"}, call("act_conninfo")).leaf = true
-	end
-    if nixio.fs.access("/etc/config/easytierweb") then
-        entry({"admin", "vpn", "easytier", "easytierweb"}, cbi("easytierweb"),_("EasyTier web server"), 48).leaf = true
-    	entry({"admin", "vpn", "easytier", "get_wlog"}, call("get_wlog")).leaf = true
-    	entry({"admin", "vpn", "easytier", "clear_wlog"}, call("clear_wlog")).leaf = true
-	end
+    entry({"admin", "vpn", "easytier"}, alias("admin", "vpn", "easytier", "easytier"),_("EasyTier"), 46).dependent = true
+    entry({"admin", "vpn", "easytier", "easytier"}, cbi("easytier"),_("EasyTier"), 47).leaf = true
+    entry({"admin", "vpn", "easytier", "get_log"}, call("get_log")).leaf = true
+    entry({"admin", "vpn", "easytier", "clear_log"}, call("clear_log")).leaf = true
+    entry({"admin", "vpn", "easytier", "status"}, call("act_status")).leaf = true
+    entry({"admin", "vpn", "easytier", "web_status"}, call("web_status")).leaf = true
+    entry({"admin", "vpn", "easytier", "conninfo"}, call("act_conninfo")).leaf = true
+
+    entry({"admin", "vpn", "easytier", "easytierweb"}, cbi("easytierweb"),_("EasyTier web server"), 48).leaf = true
+	entry({"admin", "vpn", "easytier", "get_wlog"}, call("get_wlog")).leaf = true
+	entry({"admin", "vpn", "easytier", "clear_wlog"}, call("clear_wlog")).leaf = true
 end
 
 function act_status()
@@ -171,7 +167,6 @@ function act_conninfo()
 		e.node = get_cli_output("node")
 		e.peer = get_cli_output("peer")
 		e.connector = get_cli_output("connector")
-		e.stun = get_cli_output("stun")
 		e.route = get_cli_output("route")
 		e.peer_center = get_cli_output("peer-center")
 		e.vpn_portal = get_cli_output("vpn-portal")
