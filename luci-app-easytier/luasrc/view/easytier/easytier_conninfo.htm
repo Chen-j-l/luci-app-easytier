@@ -137,14 +137,10 @@ function updateConnInfo(data) {
 	var sections = [
 		{id: 'node', title: '节点信息', key: 'node'},
 		{id: 'peer', title: '节点列表', key: 'peer'},
-		{id: 'connector', title: '连接器信息', key: 'connector'},
 		{id: 'route', title: '路由信息', key: 'route'},
 		{id: 'peercenter', title: '节点中心', key: 'peer_center'},
 		{id: 'vpnportal', title: 'VPN门户', key: 'vpn_portal'},
 		{id: 'proxy', title: 'TCP/KCP代理', key: 'proxy'},
-		{id: 'acl', title: 'ACL规则', key: 'acl'},
-		{id: 'mappedlistener', title: '映射监听器', key: 'mapped_listener'},
-		{id: 'stats', title: '统计信息', key: 'stats'},
 		{id: 'cmdline', title: '启动参数', key: 'cmdline'}
 	];
 	
@@ -289,15 +285,6 @@ function updateConnInfo(data) {
 	</div>
 	
 	<div class="conninfo-section">
-		<div class="conninfo-section-header" onclick="toggleSection('connector')">
-			<span id="conninfo_icon_connector" class="conninfo-section-icon">▼</span>
-			<span class="conninfo-section-title">连接器信息</span>
-		</div>
-		<div id="conninfo_content_connector" class="conninfo-section-content">
-		</div>
-	</div>
-	
-	<div class="conninfo-section">
 		<div class="conninfo-section-header" onclick="toggleSection('route')">
 			<span id="conninfo_icon_route" class="conninfo-section-icon">▼</span>
 			<span class="conninfo-section-title">路由信息</span>
@@ -330,33 +317,6 @@ function updateConnInfo(data) {
 			<span class="conninfo-section-title">TCP/KCP代理</span>
 		</div>
 		<div id="conninfo_content_proxy" class="conninfo-section-content">
-		</div>
-	</div>
-	
-	<div class="conninfo-section">
-		<div class="conninfo-section-header" onclick="toggleSection('acl')">
-			<span id="conninfo_icon_acl" class="conninfo-section-icon">▼</span>
-			<span class="conninfo-section-title">ACL规则</span>
-		</div>
-		<div id="conninfo_content_acl" class="conninfo-section-content">
-		</div>
-	</div>
-	
-	<div class="conninfo-section">
-		<div class="conninfo-section-header" onclick="toggleSection('mappedlistener')">
-			<span id="conninfo_icon_mappedlistener" class="conninfo-section-icon">▼</span>
-			<span class="conninfo-section-title">映射监听器</span>
-		</div>
-		<div id="conninfo_content_mappedlistener" class="conninfo-section-content">
-		</div>
-	</div>
-	
-	<div class="conninfo-section">
-		<div class="conninfo-section-header" onclick="toggleSection('stats')">
-			<span id="conninfo_icon_stats" class="conninfo-section-icon">▼</span>
-			<span class="conninfo-section-title">统计信息</span>
-		</div>
-		<div id="conninfo_content_stats" class="conninfo-section-content">
 		</div>
 	</div>
 	

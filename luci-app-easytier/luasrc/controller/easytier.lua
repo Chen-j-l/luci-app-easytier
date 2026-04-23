@@ -50,7 +50,7 @@ function index()
     entry({"admin", "vpn", "easytier", "web_status"}, call("web_status")).leaf = true
     entry({"admin", "vpn", "easytier", "conninfo"}, call("act_conninfo")).leaf = true
 
-    entry({"admin", "vpn", "easytier", "easytierweb"}, cbi("easytierweb"),_("EasyTier web server"), 48).leaf = true
+    entry({"admin", "vpn", "easytier", "easytierweb"}, cbi("easytierweb"),_("EasyTier Web Server"), 48).leaf = true
 	entry({"admin", "vpn", "easytier", "get_wlog"}, call("get_wlog")).leaf = true
 	entry({"admin", "vpn", "easytier", "clear_wlog"}, call("clear_wlog")).leaf = true
 end

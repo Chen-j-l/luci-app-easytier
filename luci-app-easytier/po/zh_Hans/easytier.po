@@ -27,23 +27,20 @@ msgstr "连接信息"
 msgid "Logs"
 msgstr "日志"
 
-msgid "Restart"
-msgstr "重启"
-
-msgid "Quickly restart once without modifying any parameters"
-msgstr "在没有修改参数的情况下快速重新启动一次"
-
 msgid "Mode"
 msgstr "模式"
 
 msgid "Default"
 msgstr "默认"
 
-msgid "Web Configuration"
-msgstr "web配置"
+msgid "Web Distribution"
+msgstr "web下发"
 
 msgid "Configuration View"
 msgstr "配置预览"
+
+msgid  "Obtain the configuration from this address"
+msgstr "从此地址获得配置"
 
 msgid "Instance Name"
 msgstr "实例名称"
@@ -61,7 +58,7 @@ msgid "Enable DHCP"
 msgstr "启用DHCP"
 
 msgid "IP address will be automatically assigned by EasyTier"
-msgstr "IP 地址将由 EasyTier 自动分配"
+msgstr "IP地址将由EasyTier自动分配"
 
 msgid "Interface IP Address"
 msgstr "接口IPV4地址"
@@ -141,7 +138,7 @@ msgstr "RPC访问白名单"
 msgid "Only allow these addresses to access rpc portal"
 msgstr "仅允许这些地址访问rpc门户"
 
-msgid "Network relay Whitelist"
+msgid "Network Relay Whitelist"
 msgstr "网络中继白名单"
 
 msgid "Only allow these addresses to relay"
@@ -193,7 +190,7 @@ msgid "Forward a local port to a remote port within the virtual network"
 msgstr "将本地端口转发到虚拟网络中的远程端口"
 
 msgid "Forwarding Rate"
-msgstr ""
+msgstr "转发速率"
 
 msgid "the maximum bps limit for foreign network relay. unit: Bps (bytes per second)"
 msgstr "外部网络中继的最大bps限制。单位：Bps（字节每秒）"
@@ -276,38 +273,62 @@ msgstr "线程数"
 msgid "Extra Parameters"
 msgstr "额外参数"
 
-msgid "Program Log
+msgid "Program Log"
 msgstr "程序日志"
 
-msgid "conninfo"
-msgstr "连接信息"
+msgid "Auto Refresh"
+msgstr "自动刷新"
 
-msgid "logs"
-msgstr "日志"
+msgid "Clear Logs"
+msgstr "清除日志"
 
-msgid 
-msgstr ""
+msgid "Download Log"
+msgstr "下载日志"
 
-msgid 
-msgstr ""
+msgid "EasyTier Web Server"
+msgstr "EasyTier WEB服务"
 
-msgid 
-msgstr ""
+msgid "EasyTier Web Server Configuration"
+msgstr "EasyTier WEB服务设置"
 
-msgid 
-msgstr ""
+msgid "Database File Path"
+msgstr "数据库文件路径"
 
+msgid "Path to the sqlite3 database file used to store all data"
+msgstr "sqlite3 数据库文件路径, 用于保存所有数据"
 
-#: applications/luci-app-easytier/root/usr/share/rpcd/acl.d/luci-app-easytier.json:3
-msgid "Grant UCI access for luci-app-easytier"
-msgstr "授予UCI访问luci-app-easytier的权限"
+msgid "Listening Protocol"
+msgstr "监听协议"
 
-#: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:127
-msgid ""
-"RPC portal address used for management. 0 means a random port, 12345 means "
-"listening on port 12345 on localhost, 0.0.0.0:12345 means listening on port "
-"12345 on all interfaces.<br>The default is 0; it is recommended to use 15888 "
-"to avoid failure in obtaining status information (-r parameter)"
-msgstr ""
-"用于管理的 RPC 门户地址。0 表示随机端口，12345 表示监听本地主机的 12345 端口，0.0.0.0:12345 表示在所有接口上监听 12345 端口。<br>"
-"默认值为 0，建议选 15888 防止无法获取状态信息 （-r 参数）"
+msgid "Distribute configuration listening protocol"
+msgstr "下发配置监听协议"
+
+msgid "Listening Port"
+msgstr "监听端口"
+
+msgid "Distribute configuration listening protocol"
+msgstr "下发配置监听端口"
+
+msgid "API Port"
+msgstr "API端口"
+
+msgid "Listening port of the RESTful server, used as ApiHost by the web frontend"
+msgstr "restful 服务器的监听端口，作为 ApiHost 并被 web 前端使用"
+
+msgid "Web Port"
+msgstr "网页端口"
+
+msgid "Listening port for the web dashboard server, leave empty to disable"
+msgstr "仪表板网页服务监听端口，留空禁用"
+
+msgid "Default API Server URL"
+msgstr "默认API服务网址"
+
+msgid "Show default API Server URL on Web"
+msgstr "网页默认显示API服务网址"
+
+msgid "GEOIP Database Path"
+msgstr "GEOIP数据库路径"
+
+msgid "External GeoIP database file path, used to locate the client"
+msgstr "外部GeoIP数据库路径，用于定位客户端"

@@ -19,21 +19,10 @@ s:tab("logs", translate("Logs"))
 switch = s:taboption("general",Flag, "enabled", translate("Enable"))
 switch.rmempty = false
 
-btncq = s:taboption("general", Button, "btncq", translate("Restart"))
-btncq.inputtitle = translate("Restart")
-btncq.description = translate("Quickly restart once without modifying any parameters")
-btncq.inputstyle = "apply"
-btncq:depends("enabled", "1")
-btncq.write = function()
-  luci.sys.call("rm -rf /tmp/easytier*.tag /tmp/easytier*.newtag >/dev/null 2>&1 &") -- 执行删除版本号信息
-  luci.sys.call("/etc/init.d/easytier restart >/dev/null 2>&1 &")  -- 执行重启命令
-  luci.sys.call("sleep 3") -- 等3S后刷新页面
-end
-
 etcmd = s:taboption("general", ListValue, "etcmd", translate("Mode"))
 etcmd.default = "etcmd"
 etcmd:value("etcmd", translate("Default"))
-etcmd:value("web", translate("Web Configuration"))
+etcmd:value("web", translate("Web Distribution"))
 
 et_config = s:taboption("general", TextValue, "et_config", translate("Configuration View"))
 et_config.rows = 18
@@ -46,11 +35,8 @@ end
 et_config.write = function(self, section, value) end
 
 web_config = s:taboption("general", Value, "web_config", translate("Web Server Address"),
-        translate("Web configuration server address. (-w parameter)<br>"
-                .. "For a self-hosted Web server, use the format: udp://server_address:22020/username<br>"
-                .. "For the official Web server, use the format: username<br>"
-                .. "Official Web Console: <a href='https://easytier.cn/web'>easytier.cn/web</a>"))
-web_config.placeholder = "admin"
+        translate("Obtain the configuration from this address"))
+web_config.placeholder = "udp://123.xyz:22020/admin"
 web_config:depends("etcmd", "web")
 
 instance_name = s:taboption("general", Value, "instance_name", translate("Instance Name"),
@@ -77,7 +63,7 @@ ipaddr = s:taboption("general", Value, "ipaddr", translate("Interface IP Address
         translate("IPv4 address of this Easytier node"))
 ipaddr.datatype = "ip4addr"
 ipaddr.placeholder = "10.0.0.1/24"
-ipaddr:depends("dhcp", 0)
+ipaddr:depends("etcmd", "etcmd")
 
 ip6addr = s:taboption("general", Value, "ip6addr", translate("Interface IPV6 Address"),
         translate("IPv6 address of this Easytier node"))
@@ -109,7 +95,7 @@ exit_nodes = s:taboption("general", DynamicList, "exit_nodes", translate("Exit N
 exit_nodes:depends("etcmd", "etcmd")
 
 socks = s:taboption("general", Value, "socks", translate("SOCKS5 Port"),
-        translate("Create a socks5 service"))
+        translate("Create a SOCKS5 service"))
 socks.datatype = "range(1,65535)"
 socks.placeholder = "1080"
 socks:depends("etcmd", "etcmd")
@@ -153,7 +139,7 @@ rpc_portal_whitelist = s:taboption("general", Value, "rpc_portal_whitelist", tra
 rpc_portal_whitelist.placeholder = "127.0.0.0/8,::1/128"
 rpc_portal_whitelist:depends("etcmd", "etcmd")
 
-relay_network_whitelist = s:taboption("general", Value, "relay_network_whitelist", translate("Network Access Whitelist"),
+relay_network_whitelist = s:taboption("general", Value, "relay_network_whitelist", translate("Network Relay Whitelist"),
         translate("Only allow these addresses to relay"))
 relay_network_whitelist.placeholder = "10.0.0.1/24,192.168.1.0/24,fd00::/64"
 relay_network_whitelist:depends("etcmd", "etcmd")
