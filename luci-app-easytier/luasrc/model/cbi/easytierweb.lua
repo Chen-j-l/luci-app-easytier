@@ -31,7 +31,7 @@ web_port.placeholder = "22020"
 web_port.default = "22020"
 
 api_port = s:taboption("general", Value, "api_port", translate("API Port"),
-        translate("Listening port of the RESTful server, used as ApiHost by the web frontend. (-a parameter)"))
+        translate("Listening port of the RESTful server, used as ApiHost by the web frontend"))
 api_port.datatype = "range(1,65535)"
 api_port.placeholder = "11211"
 api_port.default = "11211"
@@ -45,7 +45,7 @@ api_host = s:taboption("general", Value, "api_host", translate("Default API Serv
         translate("Show default API Server URL on Web"))
 
 geoip_db = s:taboption("general", Value, "geoip_db", translate("GEOIP Database Path"),
-        translate("External GeoIP database file path used to locate the client"))
+        translate("External GeoIP database file path, used to locate the client"))
 
 weblog = s:taboption("general", ListValue, "weblog", translate("Program Log"))
 weblog.default = "off"

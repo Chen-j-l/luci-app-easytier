@@ -39,6 +39,9 @@ msgstr "web下发"
 msgid "Configuration View"
 msgstr "配置预览"
 
+msgid  "Web Server Address"
+msgstr "Web服务地址"
+
 msgid  "Obtain the configuration from this address"
 msgstr "从此地址获得配置"
 
@@ -225,9 +228,6 @@ msgstr "禁用 P2P"
 msgid "P2P Only"
 msgstr "仅 P2P"
 
-msgid "Lazy P2P"
-msgstr "延迟 P2P"
-
 msgid "Bind to Physical Device Only"
 msgstr "仅使用物理网卡"
 
@@ -239,9 +239,6 @@ msgstr "启用出口节点"
 
 msgid "Relay RPC Packets"
 msgstr "转发RPC包"
-
-msgid "Need P2P"
-msgstr "需要 P2P"
 
 msgid "Multi Thread"
 msgstr "启用多线程"

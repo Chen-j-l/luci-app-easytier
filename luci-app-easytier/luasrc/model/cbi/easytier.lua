@@ -222,12 +222,10 @@ et_flags:value("enable_quic_proxy", translate("Enable QUIC Proxy")) -- 启用 QU
 et_flags:value("disable_quic_input", translate("Disable QUIC Input")) -- 禁用 QUIC 输入
 et_flags:value("disable_p2p", translate("Disable P2P")) -- 禁用 P2P
 et_flags:value("p2p_only", translate("P2P Only")) -- 仅 P2P
-et_flags:value("lazy_p2p", translate("Lazy P2P")) -- 延迟 P2P
 et_flags:value("bind_device", translate("Bind to Physical Device Only")) -- 仅使用物理网卡
 et_flags:value("no_tun", translate("No TUN Mode")) -- 无 TUN 模式
 et_flags:value("enable_exit_node", translate("Enable Exit Node")) -- 启用出口节点
 et_flags:value("relay_all_peer_rpc", translate("Relay RPC Packets")) -- 转发RPC包
-et_flags:value("need_p2p", translate("Need P2P")) -- 需要 P2P
 et_flags:value("multi_thread", translate("Multi Thread")) -- 启用多线程
 et_flags:value("proxy_forward_by_system", translate("System Forward")) -- 系统转发
 et_flags:value("disable_encryption", translate("Disable Encryption")) -- 禁用加密
