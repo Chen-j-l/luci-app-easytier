@@ -24,7 +24,7 @@ etcmd.default = "etcmd"
 etcmd:value("etcmd", translate("Default"))
 etcmd:value("web", translate("Web Distribution"))
 
-et_config = s:taboption("general", TextValue, "et_config", translate("Configuration View"))
+et_config = s:taboption("general", TextValue, "et_config", translate("Generate Configuration"))
 et_config.rows = 18
 et_config.wrap = "off"
 et_config.readonly = true
