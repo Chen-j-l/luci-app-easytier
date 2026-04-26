@@ -18,7 +18,7 @@ msgstr ""
 msgid "EasyTier Configuration"
 msgstr "EasyTier配置"
 
-"General Settings"
+msgid "General Settings"
 msgstr "常规设置"
 
 msgid "Connection Info"
