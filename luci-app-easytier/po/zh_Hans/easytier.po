@@ -36,13 +36,13 @@ msgstr "默认"
 msgid "Web Distribution"
 msgstr "web下发"
 
-msgid "Configuration View"
-msgstr "配置预览"
+msgid "Generate Configuration"
+msgstr "生成配置"
 
-msgid  "Web Server Address"
+msgid "Web Server Address"
 msgstr "Web服务地址"
 
-msgid  "Obtain the configuration from this address"
+msgid "Obtain the configuration from this address"
 msgstr "从此地址获得配置"
 
 msgid "Instance Name"
