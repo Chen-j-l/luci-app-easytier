@@ -184,7 +184,6 @@ start_et() {
 		[ -z "$extra_args" ] || core_cmd="${core_cmd} $extra_args"
 	fi	
 	if [ "$etcmd" = "web" ] ; then
-		#WEB控制台启动
 		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 运行 ${easytierbin} -w ${web_config}" >>/tmp/easytier.log
 		[ -f /etc/easytier/et_machine_id ] || touch /etc/easytier/et_machine_id
 		if [ ! -s /etc/easytier/et_machine_id ]; then

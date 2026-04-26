@@ -1,11 +1,11 @@
 
 config easytier
-	option enabled '1'
+	option enabled '0'
 	option etcmd 'etcmd'
 	option instance_name 'default'
 	option dhcp '1'
-	option network_name '123'
-	option network_secret '123'
+	option network_name 'network_name'
+	option network_secret 'network_secret'
 	option rpc_portal '15888'
 	option default_protocol '-'
 	option dev_name 'easytier0'
