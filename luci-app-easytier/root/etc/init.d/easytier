@@ -77,7 +77,7 @@ start_et() {
         
         mtu="$(uci -q get easytier.@easytier[0].mtu)"
         encryption_algorithm="$(uci -q get easytier.@easytier[0].encryption_algorithm)"
-        dev_name="$(uci -q get easytier.@easytier[0].dev_name | echo easytier0)"
+        dev_name="$(uci -q get easytier.@easytier[0].dev_name || echo easytier0)"
         multi_thread_count="$(uci -q get easytier.@easytier[0].multi_thread_count)"
         data_compress_algo="$(uci -q get easytier.@easytier[0].data_compress_algo)"
         
