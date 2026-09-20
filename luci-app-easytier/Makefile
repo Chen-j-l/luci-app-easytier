@@ -18,7 +18,6 @@ PKG_NAME:=luci-app-easytier
 
 define Package/$(PKG_NAME)/conffiles
 /etc/config/easytier
-/etc/easytier/
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk

@@ -2,10 +2,7 @@ local http = luci.http
 local nixio = require "nixio"
 
 m = Map("easytier")
-m.description = translate("A simple, secure, decentralized VPN solution for intranet penetration, implemented in Rust using the Tokio framework. "
-        .. "Project URL: <a href=\"https://github.com/EasyTier/EasyTier\" target=\"_blank\">github.com/EasyTier/EasyTier</a>&nbsp;&nbsp;"
-        .. "<a href=\"http://easytier.cn\" target=\"_blank\">Official Documentation</a>&nbsp;&nbsp;"
-        .. "<a href=\"http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262\" target=\"_blank\">QQ Group</a>&nbsp;&nbsp;")
+m.description = translate("A simple, secure, decentralized VPN solution for intranet penetration, implemented in Rust using the Tokio framework. ")
   
 m:section(SimpleSection).template  = "easytier/easytier_status"
 
@@ -35,12 +32,12 @@ end
 et_config.write = function(self, section, value) end
 
 web_config = s:taboption("general", Value, "web_config", translate("Web Server Address"),
-        translate("Obtain the configuration from this address"))
+	translate("Obtain the configuration from this address"))
 web_config.placeholder = "udp://123.xyz:22020/admin"
 web_config:depends("etcmd", "web")
 
 instance_name = s:taboption("general", Value, "instance_name", translate("Instance Name"),
-        translate("Distinguish Easytier node instances on the same machine"))
+	translate("Distinguish Easytier node instances on the same machine"))
 instance_name.placeholder = "default"
 instance_name:depends("etcmd", "etcmd")
 
@@ -51,101 +48,101 @@ hostname = hostname:gsub("\n", "")
 local device_name = (model ~= "" and model) or (hostname ~= "" and hostname) or "OpenWrt"
 device_name = device_name:gsub(" ", "_")
 hostname_opt = s:taboption("general", Value, "hostname", translate("Hostname"),
-        translate("Hostname in Easytier"))
+	translate("Hostname in Easytier"))
 hostname_opt.placeholder = device_name
 
 dhcp = s:taboption("general", Flag, "dhcp", translate("Enable DHCP"),
-        translate("IP address will be automatically assigned by EasyTier"))
+	translate("IP address will be automatically assigned by EasyTier"))
 dhcp.rmempty = false
 dhcp:depends("etcmd", "etcmd")
 
 ipaddr = s:taboption("general", Value, "ipaddr", translate("Interface IP Address"),
-        translate("IPv4 address of this Easytier node"))
+	translate("IPv4 address of this Easytier node"))
 ipaddr.datatype = "ip4addr"
 ipaddr.placeholder = "10.0.0.1/24"
 ipaddr:depends("etcmd", "etcmd")
 
 ip6addr = s:taboption("general", Value, "ip6addr", translate("Interface IPV6 Address"),
-        translate("IPv6 address of this Easytier node"))
+	translate("IPv6 address of this Easytier node"))
 ip6addr.datatype = "ip6addr"
 ip6addr.placeholder = "2001:db8::1/64"
 ip6addr:depends("etcmd", "etcmd")
 
 listeners = s:taboption("general", DynamicList, "listeners", translate("Listeners"),
-        translate("Listen Port setting"))
+	translate("Listen Port setting"))
 listeners.placeholder = "tcp://0.0.0.0:11010"
 listeners:depends("etcmd", "etcmd")
 
 mapped_listeners = s:taboption("general", DynamicList, "mapped_listeners", translate("Mapped Listenners"),
-        translate("Inform other nodes that they can use this address to connect to this node"))
+	translate("Inform other nodes that they can use this address to connect to this node"))
 mapped_listeners.placeholder = "tcp://123.xyz:12345"
 mapped_listeners:depends("etcmd", "etcmd")
 
 proxy_cidrs = s:taboption("general", DynamicList, "proxy_cidrs", translate("Subnet Proxy"),
-        translate("Inform other nodes of the local network segment"))
+	translate("Inform other nodes of the local network segment"))
 proxy_cidrs:depends("etcmd", "etcmd")
 
 manual_routes = s:taboption("general", DynamicList, "manual_routes", translate("Route CIDR"),
-        translate("Manually assign route CIDRs. This disables subnet proxying and WireGuard routes propagated from peer nodes"))
+	translate("Manually assign route CIDRs. This disables subnet proxying and WireGuard routes propagated from peer nodes"))
 manual_routes.placeholder = "192.168.0.0/16"
 manual_routes:depends("etcmd", "etcmd")
 
 exit_nodes = s:taboption("general", DynamicList, "exit_nodes", translate("Exit Node Addresses"),
-        translate("Forward all traffic using the node"))
+	translate("Forward all traffic using the node"))
 exit_nodes:depends("etcmd", "etcmd")
 
 socks = s:taboption("general", Value, "socks", translate("SOCKS5 Port"),
-        translate("Create a SOCKS5 service"))
+	translate("Create a SOCKS5 service"))
 socks.datatype = "range(1,65535)"
 socks.placeholder = "1080"
 socks:depends("etcmd", "etcmd")
 
 network_name = s:taboption("general", Value, "network_name", translate("Network Name"),
-        translate("Used to identify this EasyTier network"))
+	translate("Used to identify this EasyTier network"))
 network_name.required = true
 network_name.rmempty = false
 network_name.placeholder = "easytier-name"
 network_name.validate = function(self, value)
     if not value or value == "" then
-        return nil, translate("Network name cannot be empty")
+	return nil, translate("Network name cannot be empty")
     end
     return value
 end
 network_name:depends("etcmd", "etcmd")
 
 network_secret = s:taboption("general", Value, "network_secret", translate("Network Secret"),
-        translate("Used to verify whether this node belongs to the EasyTier network"))
+	translate("Used to verify whether this node belongs to the EasyTier network"))
 network_secret.required = true
 network_secret.rmempty = false
 network_secret.placeholder = "easytier-password"
 network_secret:depends("etcmd", "etcmd")
 
 peers = s:taboption("general", DynamicList, "peers", translate("Peer Nodes"),
-        translate("Initial connected peer nodes"))
+	translate("Initial connected peer nodes"))
 peers.placeholder = "tcp://public.easytier.top:11010"
 peers:depends("etcmd", "etcmd")
 
 
 
 rpc_portal = s:taboption("general", Value, "rpc_portal", translate("Portal Address Port"),
-        translate("It is recommended to use 15888 to avoid failure in obtaining status information"))
+	translate("It is recommended to use 15888 to avoid failure in obtaining status information"))
 rpc_portal.placeholder = "15888"
 rpc_portal.default = "15888"
 rpc_portal.datatype = "range(1,65535)"
 rpc_portal:depends("etcmd", "etcmd")
 
 rpc_portal_whitelist = s:taboption("general", Value, "rpc_portal_whitelist", translate("RPC Access Whitelist"),
-        translate("Only allow these addresses to access rpc portal"))
+	translate("Only allow these addresses to access rpc portal"))
 rpc_portal_whitelist.placeholder = "127.0.0.0/8,::1/128"
 rpc_portal_whitelist:depends("etcmd", "etcmd")
 
 relay_network_whitelist = s:taboption("general", Value, "relay_network_whitelist", translate("Network Relay Whitelist"),
-        translate("Only allow these addresses to relay"))
+	translate("Only allow these addresses to relay"))
 relay_network_whitelist.placeholder = "10.0.0.1/24,192.168.1.0/24,fd00::/64"
 relay_network_whitelist:depends("etcmd", "etcmd")
 
 uuid = s:taboption("general", Value, "uuid", translate("UUID"),
-        translate("Unique identifier used to recognize this device when connecting to the web console, for issuing configuration files"))
+	translate("Unique identifier used to recognize this device when connecting to the web console, for issuing configuration files"))
 uuid.rows = 1
 uuid.wrap = "off"
 uuid:depends("etcmd", "web")
@@ -158,18 +155,18 @@ end
 
 
 vpn_portal = s:taboption("general", Value, "vpn_portal", translate("VPN Portal URL"),
-        translate("Defines the URL of the VPN portal, allowing other VPN clients to connect"))
+	translate("Defines the URL of the VPN portal, allowing other VPN clients to connect"))
 vpn_portal.placeholder = "wg://0.0.0.0:11011/10.14.14.0/24"
 vpn_portal:depends("etcmd", "etcmd")
 
 mtu = s:taboption("general", Value, "mtu", translate("MTU"),
-        translate("MTU for the TUN device, default is 1380 when unencrypted, and 1360 when encrypted"))
+	translate("MTU for the TUN device, default is 1380 when unencrypted, and 1360 when encrypted"))
 mtu.datatype = "range(1,1500)"
 mtu.placeholder = "1300"
 mtu:depends("etcmd", "etcmd")
 
 default_protocol = s:taboption("general", ListValue, "default_protocol", translate("Default Protocol"),
-        translate("The default protocol used when connecting to peer nodes"))
+	translate("The default protocol used when connecting to peer nodes"))
 default_protocol:value("-")
 default_protocol:value("tcp")
 default_protocol:value("udp")
@@ -178,7 +175,7 @@ default_protocol:value("wss")
 default_protocol:depends("etcmd", "etcmd")
 
 dev_name = s:taboption("general", Value, "dev_name", translate("Device Name"),
-        translate("Custom name for the virtual TUN interface"))
+	translate("Custom name for the virtual TUN interface"))
 dev_name.placeholder = "easytier0"
 
 encryption_algorithm = s:taboption("general", ListValue, "encryption_algorithm", translate("Encryption Algorithm"))
@@ -200,16 +197,16 @@ data_compress_algo:value("2",translate("zstd"))
 data_compress_algo:depends("etcmd", "etcmd")
 
 whitelist = s:taboption("general", DynamicList, "whitelist", translate("Whitelisted Networks"),
-        translate("Only forward traffic for whitelisted networks. Input is a wildcard string"))
+	translate("Only forward traffic for whitelisted networks. Input is a wildcard string"))
 whitelist:depends("etcmd", "etcmd")
 
 port_forward = s:taboption("general", DynamicList, "port_forward", translate("Port Forwarding"),
-        translate("Forward a local port to a remote port within the virtual network"))
+	translate("Forward a local port to a remote port within the virtual network"))
 port_forward.placeholder = "udp://0.0.0.0:1234/10.0.0.1:2345"
 port_forward:depends("etcmd", "etcmd")
 
 foreign_relay_bps_limit = s:taboption("general", Value, "foreign_relay_bps_limit", translate("Forwarding Rate"),
-        translate("the maximum bps limit for foreign network relay. unit: Bps (bytes per second)"))
+	translate("the maximum bps limit for foreign network relay. unit: Bps (bytes per second)"))
 foreign_relay_bps_limit:depends("etcmd", "etcmd")
 
 et_flags = s:taboption("general", MultiValue, "et_flags", translate("Advance Control"))

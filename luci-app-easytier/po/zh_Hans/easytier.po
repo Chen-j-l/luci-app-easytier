@@ -1,19 +1,8 @@
 msgid ""
 "A simple, secure, decentralized VPN solution for intranet penetration, "
-"implemented in Rust using the Tokio framework. Project URL: <a href="
-"\"https://github.com/EasyTier/EasyTier\" target=\"_blank\">github.com/"
-"EasyTier/EasyTier</a>&nbsp;&nbsp;<a href=\"http://easytier.cn\" target="
-"\"_blank\">Official Documentation</a>&nbsp;&nbsp;<a href=\"http://qm.qq.com/"
-"cgi-bin/qm/qr?"
-"_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx"
-"%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262\" "
-"target=\"_blank\">QQ Group</a>&nbsp;&nbsp;">Beginner Tutorial</a>"
+"implemented in Rust using the Tokio framework. "
 msgstr ""
 "一个简单、安全、去中心化的内网穿透 VPN 组网方案，使用 Rust 语言和 Tokio 框架实现。 "
-"项目地址：<a href=\"https://github.com/EasyTier/EasyTier\" target=\"_blank\">github.com/EasyTier/EasyTier</a>&nbsp;&nbsp;"
-"<a href=\"http://easytier.cn\" target=\"_blank\">官网文档</a>&nbsp;&nbsp;"
-"<a href=\"http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=jhP2Z4UsEZ8wvfGPLrs0VwLKn_uz0Q_p&authKey=OGKSQLfg61YPCpVQuvx%2BxE7hUKBVBEVi9PljrDKbHlle6xqOXx8sOwPPTncMambK&noverify=0&group_code=949700262\" target=\"_blank\">QQ群</a>&nbsp;&nbsp;"
-
 
 msgid "EasyTier Configuration"
 msgstr "EasyTier配置"
@@ -281,51 +270,3 @@ msgstr "清除日志"
 
 msgid "Download Log"
 msgstr "下载日志"
-
-msgid "EasyTier Web Server"
-msgstr "EasyTier WEB服务"
-
-msgid "EasyTier Web Server Configuration"
-msgstr "EasyTier WEB服务设置"
-
-msgid "Database File Path"
-msgstr "数据库文件路径"
-
-msgid "Path to the sqlite3 database file used to store all data"
-msgstr "sqlite3 数据库文件路径, 用于保存所有数据"
-
-msgid "Listening Protocol"
-msgstr "监听协议"
-
-msgid "Distribute configuration listening protocol"
-msgstr "下发配置监听协议"
-
-msgid "Listening Port"
-msgstr "监听端口"
-
-msgid "Distribute configuration listening protocol"
-msgstr "下发配置监听端口"
-
-msgid "API Port"
-msgstr "API端口"
-
-msgid "Listening port of the RESTful server, used as ApiHost by the web frontend"
-msgstr "restful 服务器的监听端口，作为 ApiHost 并被 web 前端使用"
-
-msgid "Web Port"
-msgstr "网页端口"
-
-msgid "Listening port for the web dashboard server, leave empty to disable"
-msgstr "仪表板网页服务监听端口，留空禁用"
-
-msgid "Default API Server URL"
-msgstr "默认API服务网址"
-
-msgid "Show default API Server URL on Web"
-msgstr "网页默认显示API服务网址"
-
-msgid "GEOIP Database Path"
-msgstr "GEOIP数据库路径"
-
-msgid "External GeoIP database file path, used to locate the client"
-msgstr "外部GeoIP数据库路径，用于定位客户端"
