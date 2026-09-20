@@ -1,8 +1,5 @@
-msgid ""
-"A simple, secure, decentralized VPN solution for intranet penetration, "
-"implemented in Rust using the Tokio framework. "
-msgstr ""
-"一个简单、安全、去中心化的内网穿透 VPN 组网方案，使用 Rust 语言和 Tokio 框架实现。 "
+msgid "A simple, secure, decentralized VPN solution for intranet penetration, implemented in Rust using the Tokio framework."
+msgstr "一个简单、安全、去中心化的内网穿透 VPN 组网方案，使用 Rust 语言和 Tokio 框架实现。"
 
 msgid "EasyTier Configuration"
 msgstr "EasyTier配置"
