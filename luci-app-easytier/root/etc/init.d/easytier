@@ -18,169 +18,175 @@ get_tz() {
 }
 
 start_et() {
-    easytierbin="/usr/bin/easytier-core"
-    easytiercli="/usr/bin/easytier-cli"
-    
-    if [ ! -f "$easytierbin" ] ; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : $easytierbin 程序文件不存在" >>/tmp/easytier.log
-        return 1
-    fi
-    
-    if [ ! -x "$easytierbin" ] ; then
-        chmod +x "$easytierbin"
-    fi
-    
-    if [ ! -x "$easytiercli" ] ; then
-        chmod +x "$easytiercli"
-    fi
-    
-    echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : easytier-core_${cpucore}开始启动" >>/tmp/easytier.log
-    ver="$($easytiercli -V | awk {'print $2'} | tr -d '~')"
-    [ ! -z "$ver" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin}当前版本号-${ver} " >>/tmp/easytier.log
-    
-    pgrep -f easytier_check | xargs kill -9 >/dev/null 2>&1
-    ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill >/dev/null 2>&1
-    ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
-    
-    etcmd="$(uci -q get easytier.@easytier[0].etcmd)"
-  	if [ "$etcmd" = "etcmd" ] ; then
-	    config_file="/tmp/easytier/config.toml"
-	    toml_dir="/tmp/easytier/"
-	    [ -d "$toml_dir" ] || mkdir -p "$toml_dir"
+	easytierbin="/usr/bin/easytier-core"
+	easytiercli="/usr/bin/easytier-cli"
+	
+	if [ ! -f "$easytierbin" ] ; then
+		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : $easytierbin 程序文件不存在" >>/tmp/easytier.log
+		return 1
+	fi
+	
+	if [ ! -x "$easytierbin" ] ; then
+		chmod +x "$easytierbin"
+	fi
+	
+	if [ ! -x "$easytiercli" ] ; then
+		chmod +x "$easytiercli"
+	fi
+	
+	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : easytier-core_${cpucore}开始启动" >>/tmp/easytier.log
+	ver="$($easytiercli -V | awk {'print $2'} | tr -d '~')"
+	[ ! -z "$ver" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin}当前版本号-${ver} " >>/tmp/easytier.log
+	
+	pgrep -f easytier_check | xargs kill -9 >/dev/null 2>&1
+	ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill >/dev/null 2>&1
+	ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	
+	etcmd="$(uci -q get easytier.@easytier[0].etcmd)"
+	if [ "$etcmd" = "etcmd" ] ; then
+		config_file="/tmp/easytier/config.toml"
+		toml_dir="/tmp/easytier/"
+		[ -d "$toml_dir" ] || mkdir -p "$toml_dir"
 		core_cmd="-c ${config_file}"
 		
 		instance_name="$(uci -q get easytier.@easytier[0].instance_name)"
-        hostname="$(uci -q get easytier.@easytier[0].hostname)"
-        [ -z "$hostname" ] || hostname=$(echo "$hostname" | sed 's/[\\$`"()|><&;]/\\&/g')
-        dhcp="$(uci -q get easytier.@easytier[0].dhcp || echo 1)"
-        ipaddr="$(uci -q get easytier.@easytier[0].ipaddr)"
-        ip6addr="$(uci -q get easytier.@easytier[0].ip6addr)"
-        listeners="$(uci -q get easytier.@easytier[0].listeners)"
-        mapped_listeners="$(uci -q get easytier.@easytier[0].mapped_listeners)"
-        proxy_cidrs="$(uci -q get easytier.@easytier[0].proxy_cidrs)"
-        routes="$(uci -q get easytier.@easytier[0].routes)"
-        exit_nodes="$(uci -q get easytier.@easytier[0].exit_nodes)"
-        
-        socks_port="$(uci -q get easytier.@easytier[0].socks_port)"
-        
-        #[network_identity]
-        network_name="$(uci -q get easytier.@easytier[0].network_name)"
-        network_secret="$(uci -q get easytier.@easytier[0].network_secret)"
-        
-        peers="$(uci -q get easytier.@easytier[0].peers)"
-        
-        vpn_portal="$(uci -q get easytier.@easytier[0].vpn_portal)"
-        
-        #external_node="$(uci -q get easytier.@easytier[0].external_node)"
-        
-        default_protocol="$(uci -q get easytier.@easytier[0].default_protocol)"
-        
-        mtu="$(uci -q get easytier.@easytier[0].mtu)"
-        encryption_algorithm="$(uci -q get easytier.@easytier[0].encryption_algorithm)"
-        dev_name="$(uci -q get easytier.@easytier[0].dev_name || echo easytier0)"
-        multi_thread_count="$(uci -q get easytier.@easytier[0].multi_thread_count)"
-        data_compress_algo="$(uci -q get easytier.@easytier[0].data_compress_algo)"
-        
-        et_flags="$(uci -q get easytier.@easytier[0].et_flags)"
-        
-        extra_args="$(uci -q get easytier.@easytier[0].extra_args)"
-        
-        #命令行
-        relay_all="$(uci -q get easytier.@easytier[0].relay_all || echo 0)"
-        whitelist="$(uci -q get easytier.@easytier[0].whitelist)"
-        foreign_relay_bps_limit="$(uci -q get easytier.@easytier[0].foreign_relay_bps_limit)"
-        rpc_portal="$(uci -q get easytier.@easytier[0].rpc_portal || echo 15888)"
-        rpc_portal_whitelist="$(uci -q get easytier.@easytier[0].rpc_portal_whitelist)"
-        log="$(uci -q get easytier.@easytier[0].log || echo off)"
-        
-        #web mode
-        web_config="$(uci -q get easytier.@easytier[0].web_config)"
-        		
-        > ${config_file}
-        {
-            [ -n "$instance_name" ] && echo "instance_name = \"$instance_name\""
-            [ -n "$hostname" ] && echo "hostname = \"$hostname\""
-            if [ "$dhcp" = "1" ]; then
-                echo "dhcp = true"
-            else
-                echo "dhcp = false"
-                echo "ipv4 = \"$ipaddr\""
-            fi
-            [ -n "$ip6addr" ] && echo "ipv6 = \"$ip6addr\""
-            echo ""
-            
-            echo "listeners = ["
-            [ -n "$listeners" ] && echo "$listeners" | sed 's/^/"/; s/$/"/; s/ /",\n"/g'
-            echo "]"
-            
-            [ -n "$mapped_listeners" ] && {
-                echo "mapped_listeners = ["
-                echo "$mapped_listeners" | sed 's/^/"/; s/$/"/; s/ /",\n"/g'
-                echo "]"
-            }
-            
-            [ -n "$proxy_cidrs" ] && {
-                echo "proxy_cidrs = ["
-                echo "$proxy_cidrs" | sed 's/^/"/; s/$/"/; s/ /",\n"/g'
-                echo "]"
-            }
-            
-            [ -n "$routes" ] && {
-                echo "routes = ["
-                echo "$routes" | sed 's/^/"/; s/$/"/; s/ /",\n"/g'
-                echo "]"
-            }
-            
-            [ -n "$exit_nodes" ] && {
-                echo "exit_nodes = ["
-                echo "$exit_nodes" | sed 's/^/"/; s/$/"/; s/ /",\n"/g'
-                echo "]"
-            }
-            
-            [ -n "$socks" ] && echo "socks = \"socks5://0.0.0.0:$socks\""
-            
-            echo "[network_identity]"
-            echo "network_name = \"${network_name}\""
-            echo "network_secret = \"${network_secret}\""
-            echo ""
-            
-            [ -n "$peers" ] && echo "$peers" | sed 's/[^ ]\+/[[peer]]\nuri = "\0"\n/g'
-            
-            echo "[flags]"
-            [ -n "$mtu" ] && echo "mtu = \"$mtu\""
-            [ -n "$encryption_algorithm " ] && echo "encryption_algorithm = \"$encryption_algorithm\""
-            [ -n "$dev_name " ] && echo "dev_name = \"$dev_name\""
-            #[ -n "$multi_thread_count " ] && echo "multi_thread_count  = $multi_thread_count"
-            [ -n "$data_compress_algo " ] && echo "data_compress_algo  = $data_compress_algo"
-            
-            [ "${et_flags//latency_first/}" != "$et_flags" ] && echo "latency_first = true" || echo "latency_first = false"
-            [ "${et_flags//use_smoltcp/}" != "$et_flags" ] && echo "use_smoltcp = true" || echo "use_smoltcp = false"
-            [ "${et_flags//enable_ipv6/}" != "$et_flags" ] && echo "enable_ipv6 = false" || echo "enable_ipv6 = true"
-            [ "${et_flags//enable_kcp_proxy/}" != "$et_flags" ] && echo "enable_kcp_proxy = true" || echo "enable_kcp_proxy = false"
-            [ "${et_flags//disable_kcp_input/}" != "$et_flags" ] && echo "disable_kcp_input = true" || echo "disable_kcp_input = false"
-            [ "${et_flags//enable_quic_proxy/}" != "$et_flags" ] && echo "enable_quic_proxy = true" || echo "enable_quic_proxy = false"
-            [ "${et_flags//disable_quic_input/}" != "$et_flags" ] && echo "disable_quic_input = true" || echo "disable_quic_input = false"
-            [ "${et_flags//disable_p2p/}" != "$et_flags" ] && echo "disable_p2p = true" || echo "disable_p2p = false"
-            [ "${et_flags//p2p_only/}" != "$et_flags" ] && echo "p2p_only = true" || echo "p2p_only = false"
-            [ "${et_flags//bind_device/}" != "$et_flags" ] && echo "bind_device = true" || echo "bind_device = false"
-            [ "${et_flags//no_tun/}" != "$et_flags" ] && echo "no_tun = true" || echo "no_tun = false"
-            [ "${et_flags//enable_exit_node/}" != "$et_flags" ] && echo "enable_exit_node = true" || echo "enable_exit_node = false"
-            [ "${et_flags//relay_all_peer_rpc/}" != "$et_flags" ] && echo "relay_all_peer_rpc = true" || echo "relay_all_peer_rpc = false"
-            [ "${et_flags//multi_thread/}" != "$et_flags" ] && echo "multi_thread = true" || echo "multi_thread = false"
-            [ "${et_flags//proxy_forward_by_system/}" != "$et_flags" ] && echo "proxy_forward_by_system = true" || echo "proxy_forward_by_system = false"
-            [ "${et_flags//disable_encryption/}" != "$et_flags" ] && echo "disable_encryption = true" || echo "disable_encryption = false"
-            [ "${et_flags//disable_tcp_hole_punching/}" != "$et_flags" ] && echo "disable_tcp_hole_punching = true" || echo "disable_tcp_hole_punching = false"
-            [ "${et_flags//disable_udp_hole_punching/}" != "$et_flags" ] && echo "disable_udp_hole_punching = true" || echo "disable_udp_hole_punching = false"
-            [ "${et_flags//disable_sym_hole_punching/}" != "$et_flags" ] && echo "disable_sym_hole_punching = true" || echo "disable_sym_hole_punching = false"
-            [ "${et_flags//accept_dns/}" != "$et_flags" ] && echo "accept_dns = true" || echo "accept_dns = false"
-            [ "${et_flags//private_mode/}" != "$et_flags" ] && echo "private_mode = true" || echo "private_mode = false"
-        
-        }>> "$config_file"
+		hostname="$(uci -q get easytier.@easytier[0].hostname)"
+		[ -z "$hostname" ] || hostname=$(echo "$hostname" | sed 's/[\\$`"()|><&;]/\\&/g')
+		dhcp="$(uci -q get easytier.@easytier[0].dhcp || echo 1)"
+		ipaddr="$(uci -q get easytier.@easytier[0].ipaddr)"
+		ip6addr="$(uci -q get easytier.@easytier[0].ip6addr)"
+		listeners="$(uci -q get easytier.@easytier[0].listeners)"
+		mapped_listeners="$(uci -q get easytier.@easytier[0].mapped_listeners)"
+		proxy_cidrs="$(uci -q get easytier.@easytier[0].proxy_cidrs)"
+		routes="$(uci -q get easytier.@easytier[0].routes)"
+		exit_nodes="$(uci -q get easytier.@easytier[0].exit_nodes)"
+		socks_port="$(uci -q get easytier.@easytier[0].socks_port)"
 		
+		#[network_identity]
+		network_name="$(uci -q get easytier.@easytier[0].network_name)"
+		network_secret="$(uci -q get easytier.@easytier[0].network_secret)"
+
+		peers="$(uci -q get easytier.@easytier[0].peers)"
+		vpn_portal="$(uci -q get easytier.@easytier[0].vpn_portal)"
+		
+		default_protocol="$(uci -q get easytier.@easytier[0].default_protocol)"
+		mtu="$(uci -q get easytier.@easytier[0].mtu)"
+		encryption_algorithm="$(uci -q get easytier.@easytier[0].encryption_algorithm)"
+		dev_name="$(uci -q get easytier.@easytier[0].dev_name || echo easytier0)"
+		relay_network_whitelist="$(uci -q get easytier.@easytier[0].relay_network_whitelist)"
+		multi_thread_count="$(uci -q get easytier.@easytier[0].multi_thread_count)"
+		data_compress_algo="$(uci -q get easytier.@easytier[0].data_compress_algo)"	
+		foreign_relay_bps_limit="$(uci -q get easytier.@easytier[0].foreign_relay_bps_limit)"	
+		et_flags="$(uci -q get easytier.@easytier[0].et_flags)"
+		
+		#命令行
+		rpc_portal="$(uci -q get easytier.@easytier[0].rpc_portal)"
+		rpc_portal_whitelist="$(uci -q get easytier.@easytier[0].rpc_portal_whitelist)"
+		extra_args="$(uci -q get easytier.@easytier[0].extra_args)"
+		log="$(uci -q get easytier.@easytier[0].log || echo off)"
+		
+		#web mode
+		web_config="$(uci -q get easytier.@easytier[0].web_config)"
+				
+		> ${config_file}
+		{
+			[ -n "$instance_name" ] && echo "instance_name = \"$instance_name\""
+			[ -n "$hostname" ] && echo "hostname = \"$hostname\""
+			if [ "$dhcp" = "1" ]; then
+				echo "dhcp = true"
+			else
+				echo "dhcp = false"
+				echo "ipv4 = \"$ipaddr\""
+			fi
+			[ -n "$ip6addr" ] && echo "ipv6 = \"$ip6addr\""
+			echo ""
+			
+			echo "listeners = ["
+			[ -n "$listeners" ] && echo "$listeners" | sed 's/^/"/; s/$/"/; s/ /",\n"/g'
+			echo "]"
+			echo ""
+			[ -n "$mapped_listeners" ] && {
+				echo "mapped_listeners = ["
+				echo "$mapped_listeners" | sed 's/^/"/; s/$/"/; s/ /",\n"/g'
+				echo "]"
+				echo ""
+			}
+			
+			[ -n "$proxy_cidrs" ] && {
+				echo "proxy_cidrs = ["
+				echo "$proxy_cidrs" | sed 's/^/"/; s/$/"/; s/ /",\n"/g'
+				echo "]"
+				echo ""
+			}
+			
+			[ -n "$routes" ] && {
+				echo "routes = ["
+				echo "$routes" | sed 's/^/"/; s/$/"/; s/ /",\n"/g'
+				echo "]"
+				echo ""
+			}
+			
+			[ -n "$exit_nodes" ] && {
+				echo "exit_nodes = ["
+				echo "$exit_nodes" | sed 's/^/"/; s/$/"/; s/ /",\n"/g'
+				echo "]"
+				echo ""
+			}
+			
+			[ -n "$socks" ] && echo "socks = \"socks5://0.0.0.0:$socks\""
+			
+			echo "[network_identity]"
+			echo "network_name = \"${network_name}\""
+			echo "network_secret = \"${network_secret}\""
+			echo ""
+			
+			[ -n "$peers" ] && echo "$peers" | sed 's/[^ ]\+/[[peer]]\nuri = "\0"\n/g'
+
+
+			[ -n "$vpn_portal" ] && {
+				listen="${vpn_portal%%/*}"
+				client_cidr="${vpn_portal#*/}"
+				echo "[vpn_portal_config]"
+				echo "client_cidr = \"$client_cidr\""
+				echo "wireguard_listen = \"$listen\""
+				echo ""
+			}
+
+			echo "[flags]"
+			[ -n "$mtu" ] && echo "mtu = \"$mtu\""
+			[ -n "$default_protocol" ] && [ "$default_protocol" != "-" ] && echo "default_protocol = \"$default_protocol\""
+			[ -n "$encryption_algorithm" ] && echo "encryption_algorithm = \"$encryption_algorithm\""
+			[ -n "$dev_name" ] && echo "dev_name = \"$dev_name\""
+			[ -n "$relay_network_whitelist" ] && echo "relay_network_whitelist = \"$relay_network_whitelist\""
+			[ -n "$multi_thread_count" ] && echo "multi_thread_count  = $multi_thread_count"
+			[ -n "$data_compress_algo" ] && echo "data_compress_algo  = $data_compress_algo"
+			[ -n "$foreign_relay_bps_limit" ] && echo "foreign_relay_bps_limit  = $foreign_relay_bps_limit"
+			
+			[ "${et_flags//latency_first/}" != "$et_flags" ] && echo "latency_first = true" || echo "latency_first = false"
+			[ "${et_flags//use_smoltcp/}" != "$et_flags" ] && echo "use_smoltcp = true" || echo "use_smoltcp = false"
+			[ "${et_flags//enable_ipv6/}" != "$et_flags" ] && echo "enable_ipv6 = false" || echo "enable_ipv6 = true"
+			[ "${et_flags//enable_kcp_proxy/}" != "$et_flags" ] && echo "enable_kcp_proxy = true" || echo "enable_kcp_proxy = false"
+			[ "${et_flags//disable_kcp_input/}" != "$et_flags" ] && echo "disable_kcp_input = true" || echo "disable_kcp_input = false"
+			[ "${et_flags//enable_quic_proxy/}" != "$et_flags" ] && echo "enable_quic_proxy = true" || echo "enable_quic_proxy = false"
+			[ "${et_flags//disable_quic_input/}" != "$et_flags" ] && echo "disable_quic_input = true" || echo "disable_quic_input = false"
+			[ "${et_flags//disable_p2p/}" != "$et_flags" ] && echo "disable_p2p = true" || echo "disable_p2p = false"
+			[ "${et_flags//p2p_only/}" != "$et_flags" ] && echo "p2p_only = true" || echo "p2p_only = false"
+			[ "${et_flags//bind_device/}" != "$et_flags" ] && echo "bind_device = true" || echo "bind_device = false"
+			[ "${et_flags//no_tun/}" != "$et_flags" ] && echo "no_tun = true" || echo "no_tun = false"
+			[ "${et_flags//enable_exit_node/}" != "$et_flags" ] && echo "enable_exit_node = true" || echo "enable_exit_node = false"
+			[ "${et_flags//relay_all_peer_rpc/}" != "$et_flags" ] && echo "relay_all_peer_rpc = true" || echo "relay_all_peer_rpc = false"
+			[ "${et_flags//multi_thread/}" != "$et_flags" ] && echo "multi_thread = true" || echo "multi_thread = false"
+			[ "${et_flags//proxy_forward_by_system/}" != "$et_flags" ] && echo "proxy_forward_by_system = true" || echo "proxy_forward_by_system = false"
+			[ "${et_flags//disable_encryption/}" != "$et_flags" ] && echo "disable_encryption = true" || echo "disable_encryption = false"
+			[ "${et_flags//disable_tcp_hole_punching/}" != "$et_flags" ] && echo "disable_tcp_hole_punching = true" || echo "disable_tcp_hole_punching = false"
+			[ "${et_flags//disable_udp_hole_punching/}" != "$et_flags" ] && echo "disable_udp_hole_punching = true" || echo "disable_udp_hole_punching = false"
+			[ "${et_flags//disable_sym_hole_punching/}" != "$et_flags" ] && echo "disable_sym_hole_punching = true" || echo "disable_sym_hole_punching = false"
+			[ "${et_flags//accept_dns/}" != "$et_flags" ] && echo "accept_dns = true" || echo "accept_dns = false"
+			[ "${et_flags//private_mode/}" != "$et_flags" ] && echo "private_mode = true" || echo "private_mode = false"
+		
+		}>> "$config_file"
 		[ -z "$rpc_portal" ] || core_cmd="${core_cmd} -r $rpc_portal"
-		[ -z "$rpc_portal_whitelist" ] || core_cmd="${core_cmd} --rpc-portal-whitelist $rpc_portal_whitelist"
-		#[ "$default_protocol" = "-" ] || core_cmd="${core_cmd} --default-protocol $default_protocol"
-		[ -z "$foreign_relay_bps_limit" ] || core_cmd="${core_cmd} --foreign-relay-bps-limit $foreign_relay_bps_limit"
+		[ -z "$rpc_portal_whitelist" ] || core_cmd="${core_cmd} $(echo "$rpc_portal_whitelist" | sed 's/[^ ]\+/--rpc-portal-whitelist \0/g')"
 		[ -z "$extra_args" ] || core_cmd="${core_cmd} $extra_args"
 	fi	
 	if [ "$etcmd" = "web" ] ; then
@@ -197,8 +203,8 @@ start_et() {
 		
 	fi
 	
-    procd_open_instance "easytier_core"
- 	procd_set_param command /bin/sh -c "
+	procd_open_instance "easytier_core"
+	procd_set_param command /bin/sh -c "
 	${easytierbin} ${core_cmd} --console-log-level ${log} >> /tmp/easytier.log 2>&1 &
 	ET_CORE_PID=\$!
 	{
@@ -214,7 +220,7 @@ start_et() {
 	LOG_MANAGEMENT_PID=\$!
 	trap \"kill -TERM \$ET_CORE_PID; kill -TERM \$LOG_MANAGEMENT_PID; exit\" SIGINT SIGTERM EXIT
 	wait \$ET_CORE_PID
-   	"
+	"
 	
 	
 	procd_set_param limits core="unlimited"
@@ -235,26 +241,26 @@ start_et() {
 		uci set network.easytier.ipaddr=$ipaddr
 	fi
 	uci set network.easytier.device="$dev_name"
-    uci set network.easytier.ifname="$dev_name"
-    [ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload >/dev/null 2>&1
-    
-    echo `date +%s` > /tmp/easytier_time
+	uci set network.easytier.ifname="$dev_name"
+	[ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload >/dev/null 2>&1
+	
+	echo `date +%s` > /tmp/easytier_time
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 启动完成!" >>/tmp/easytier.log
 }
 
 start_service() {
 	echo "start.."
 	cputype=$(uname -ms | tr ' ' '_' | tr '[A-Z]' '[a-z]')
-        [ -n "$(echo $cputype | grep -E "linux.*armv.*")" ] && cpucore="arm" 
-        [ -n "$(echo $cputype | grep -E "linux.*armv7.*")" ] && [ -n "$(cat /proc/cpuinfo | grep vfp)" ] && cpucore="armv7" 
-        [ -n "$(echo $cputype | grep -E "linux.*aarch64.*|linux.*armv8.*")" ] && cpucore="aarch64" 
-        [ -n "$(echo $cputype | grep -E "linux.*86.*")" ] && cpucore="i386" 
-        [ -n "$(echo $cputype | grep -E "linux.*86_64.*")" ] && cpucore="x86_64" 
-    if [ -n "$(echo $cputype | grep -E "linux.*mips.*")" ] ; then
-       mipstype=$(echo -n I | hexdump -o 2>/dev/null | awk '{ print substr($2,6,1); exit}') 
-       [ "$mipstype" = "0" ] && cpucore="mips" || cpucore="mipsel" 
-    fi
-    echo "" >/tmp/easytier.log
+		[ -n "$(echo $cputype | grep -E "linux.*armv.*")" ] && cpucore="arm" 
+		[ -n "$(echo $cputype | grep -E "linux.*armv7.*")" ] && [ -n "$(cat /proc/cpuinfo | grep vfp)" ] && cpucore="armv7" 
+		[ -n "$(echo $cputype | grep -E "linux.*aarch64.*|linux.*armv8.*")" ] && cpucore="aarch64" 
+		[ -n "$(echo $cputype | grep -E "linux.*86.*")" ] && cpucore="i386" 
+		[ -n "$(echo $cputype | grep -E "linux.*86_64.*")" ] && cpucore="x86_64" 
+	if [ -n "$(echo $cputype | grep -E "linux.*mips.*")" ] ; then
+	   mipstype=$(echo -n I | hexdump -o 2>/dev/null | awk '{ print substr($2,6,1); exit}') 
+	   [ "$mipstype" = "0" ] && cpucore="mips" || cpucore="mipsel" 
+	fi
+	echo "" >/tmp/easytier.log
 
 	[ "$(uci -q get easytier.@easytier[0].enabled)" = "1" ] && start_et
 }
@@ -262,9 +268,9 @@ start_service() {
 stop_service() {
 		echo "stop.."
 		if [ "$(uci -q get easytier.@easytier[0].enabled)" = "0" ] ; then
-        	ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill >/dev/null 2>&1
-        	ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
-        	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : easytier-core 已停止" >>/tmp/easytier.log
+			ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill >/dev/null 2>&1
+			ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+			echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : easytier-core 已停止" >>/tmp/easytier.log
 		fi
 }
 
@@ -276,6 +282,6 @@ reload_service() {
 service_triggers() {
 	procd_add_reload_trigger "easytier"
 	#如果WAN网络接口上线则触发重新启动easytier
-    procd_add_interface_trigger "interface.*.up" wan /etc/init.d/easytier reload
+	procd_add_interface_trigger "interface.*.up" wan /etc/init.d/easytier reload
 }
 

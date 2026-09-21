@@ -115,23 +115,17 @@ msgstr "对等节点"
 msgid "Initial connected peer nodes"
 msgstr "连接到对等节点"
 
-msgid "Portal Address Port"
-msgstr "门户地址端口"
+msgid "RPC Listen setting"
+msgstr "门户监听设置"
 
-msgid "It is recommended to use 15888 to avoid failure in obtaining status information"
-msgstr "用于管理的RPC门户地址，建议使用15888，以避免获取状态信息失败"
+msgid "It is recommended to leave it blank to avoid failure in obtaining status information"
+msgstr "建议留空以避免获取状态信息失败"
 
 msgid "RPC Access Whitelist"
 msgstr "RPC访问白名单"
 
 msgid "Only allow these addresses to access rpc portal"
 msgstr "仅允许这些地址访问rpc门户"
-
-msgid "Network Relay Whitelist"
-msgstr "网络中继白名单"
-
-msgid "Only allow these addresses to relay"
-msgstr "只允许这些地址中继"
 
 msgid "Unique identifier used to recognize this device when connecting to the web console, for issuing configuration files"
 msgstr "用于在连接到web控制台时识别此设备以发布配置文件的唯一标识符"

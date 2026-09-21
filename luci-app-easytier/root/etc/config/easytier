@@ -6,7 +6,6 @@ config easytier
 	option dhcp '1'
 	option network_name 'network_name'
 	option network_secret 'network_secret'
-	option rpc_portal '15888'
 	option default_protocol '-'
 	option dev_name 'easytier0'
 	option encryption_algorithm 'aes-gcm'

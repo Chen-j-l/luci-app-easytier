@@ -122,24 +122,17 @@ peers = s:taboption("general", DynamicList, "peers", translate("Peer Nodes"),
 peers.placeholder = "tcp://public.easytier.top:11010"
 peers:depends("etcmd", "etcmd")
 
-
-
-rpc_portal = s:taboption("general", Value, "rpc_portal", translate("Portal Address Port"),
-	translate("It is recommended to use 15888 to avoid failure in obtaining status information"))
-rpc_portal.placeholder = "15888"
-rpc_portal.default = "15888"
-rpc_portal.datatype = "range(1,65535)"
+rpc_portal = s:taboption("general", Value, "rpc_portal", translate("RPC Listen setting"),
+	translate("It is recommended to leave it blank to avoid failure in obtaining status information"))
+rpc_portal.placeholder = "127.0.0.1:0"
+rpc_portal.datatype = "ipaddrport"
 rpc_portal:depends("etcmd", "etcmd")
 
-rpc_portal_whitelist = s:taboption("general", Value, "rpc_portal_whitelist", translate("RPC Access Whitelist"),
+rpc_portal_whitelist = s:taboption("general", DynamicList, "rpc_portal_whitelist", translate("RPC Access Whitelist"),
 	translate("Only allow these addresses to access rpc portal"))
-rpc_portal_whitelist.placeholder = "127.0.0.0/8,::1/128"
+rpc_portal_whitelist.placeholder = "127.0.0.0/8 ::1/128"
+rpc_portal_whitelist.datatype = "cidr"
 rpc_portal_whitelist:depends("etcmd", "etcmd")
-
-relay_network_whitelist = s:taboption("general", Value, "relay_network_whitelist", translate("Network Relay Whitelist"),
-	translate("Only allow these addresses to relay"))
-relay_network_whitelist.placeholder = "10.0.0.1/24,192.168.1.0/24,fd00::/64"
-relay_network_whitelist:depends("etcmd", "etcmd")
 
 uuid = s:taboption("general", Value, "uuid", translate("UUID"),
 	translate("Unique identifier used to recognize this device when connecting to the web console, for issuing configuration files"))
@@ -153,10 +146,9 @@ uuid.write = function(self, section, value)
     nixio.fs.writefile("/etc/easytier/et_machine_id", value:gsub("\r\n", "\n"))
 end
 
-
 vpn_portal = s:taboption("general", Value, "vpn_portal", translate("VPN Portal URL"),
 	translate("Defines the URL of the VPN portal, allowing other VPN clients to connect"))
-vpn_portal.placeholder = "wg://0.0.0.0:11011/10.14.14.0/24"
+vpn_portal.placeholder = "0.0.0.0:11011/10.14.14.0/24"
 vpn_portal:depends("etcmd", "etcmd")
 
 mtu = s:taboption("general", Value, "mtu", translate("MTU"),
@@ -196,9 +188,9 @@ data_compress_algo:value("1",translate("none"))
 data_compress_algo:value("2",translate("zstd"))
 data_compress_algo:depends("etcmd", "etcmd")
 
-whitelist = s:taboption("general", DynamicList, "whitelist", translate("Whitelisted Networks"),
+relay_network_whitelist = s:taboption("general", DynamicList, "whitelist", translate("Whitelisted Networks"),
 	translate("Only forward traffic for whitelisted networks. Input is a wildcard string"))
-whitelist:depends("etcmd", "etcmd")
+relay_network_whitelist:depends("etcmd", "etcmd")
 
 port_forward = s:taboption("general", DynamicList, "port_forward", translate("Port Forwarding"),
 	translate("Forward a local port to a remote port within the virtual network"))
